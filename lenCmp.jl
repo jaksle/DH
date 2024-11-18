@@ -5,7 +5,7 @@ H0 = 0.35
 D0  = 1.
 n = 10^4
 m = 200
-ts = 1:m
+ts = 1:ln
 
 K(s,t) = D0/2*(t^(2H0)+s^(2H0)-abs(s-t)^(2H0))
 S = [K(s,t) for s in ts, t in ts]

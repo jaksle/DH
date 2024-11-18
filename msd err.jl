@@ -3,9 +3,9 @@ using ProgressMeter
 
 ## FBM sim
 
-H0 = 0.35
+H0 = 0.3
 D0  = 1.
-ln = 200
+ln = 100
 ts = 1:ln
 n = 10000
 
@@ -45,16 +45,8 @@ le = @. log(msd) - log( D0*(ts[1:m])^(2H0) )
 ce = cov(e')
 cle = cov(le')
 
-incrCov(i,j,k,l) = begin 
-    a, b, c, d = ts[i], ts[j], ts[k], ts[l]
-    K(a,b) + K(a-c,b-d) - K(a,b-d) - K(b,a-c)
-end
-theorCov(k,l,n) = begin
-    n
-    2/((n-k)*(n-l)) * sum( incrCov(i,j,k,l)^2 for j in l+1:n, i in k+1:n )
-end
-
-thC = theorCov.(1:m,1:m,ln)
+thC1 = theorCov.(1:m,(1:m)',ln,K)
+thC = theorCovEff.(1:m,(1:m)',ln,K)
 thlC = @. thC ./ (D0*ts[1:m]^(2H0))^2
 
 plot(diag(ce))
