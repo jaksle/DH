@@ -1,5 +1,5 @@
 
-using Plots, ProgressMeter, LaTeXStrings
+using Plots, LinearAlgebra, ProgressMeter, LaTeXStrings
 
 ##
 
@@ -8,7 +8,11 @@ lenH = length(hs)
 b = 10
 ln = 100
 m = 50
+n = 10^4
 ts = 1:ln
+
+
+##
 
 M = Array{Float64}(undef,lenH,m,m)
 
@@ -20,6 +24,8 @@ end
 n = 10^5
 Ts = [ones(m) log10.(ts[1:m])]
 gR = [(Ts'*M[a,:,:]^-1*Ts)^-1*Ts'*M[a,:,:]^-1 for a in 1:lenH]
+
+
 R = (Ts'*Ts)^-1*Ts'
 vlD[k] = var(B[1,:])
 v2H[k] = var(B[2,:])
@@ -77,7 +83,44 @@ for b in 1:lenH
     res3[b] = cov(B[1,:],B[2,:])
 end
 
-##
+
+## plot optimum
+
+plot(hs,res1,
+    fontfamily = "Computer Modern",
+    ribbon=  (zeros(lenH),-res1),
+    ylim = (minimum(res1),maximum(res1)),
+    xlabel = L"input $H$",
+    title = L"true $H=0.3$",
+    ylabel = L"{}_\mathrm{tw}\mathrm{var}(\log{}_{10}\hat D)",
+    label = "",
+    xlim = (0.2,0.6),
+    xticks = 0.2:0.1:0.6,
+    linewidth = 2,
+)
+plot!(twinx(),hs,res2,
+    color =palette(:default)[2],
+    xlim = (0.2,0.6),
+    ylabel = L"{}_\mathrm{tw}\mathrm{var}(2\hat H)",
+    label = "",
+    ribbon=  (zeros(lenH),-res2),
+    ylim = (minimum(res2),maximum(res2)),
+    linewidth = 2,
+)
+plot!([],[],
+    linewidth = 2,
+    color = palette(:default)[1],
+    label = L"estimation of $D$",
+)
+plot!([],[],
+    linewidth = 2,
+    color = palette(:default)[2],
+    label = L"estimation of $H$",
+    legend = :topleft,
+)
+
+savefig("inputHslice.pdf")
+## heatmap plots
 
 heatmap(hs,hs,Res1',
     title = L"{}_\mathrm{tw}\mathrm{var}(\log\!{}_{10} D)", 
