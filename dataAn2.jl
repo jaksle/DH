@@ -3,10 +3,16 @@ using Plots, MAT, ProgressMeter
 ## load
 
 file = matopen("prl_trajectories_untreated.mat")
-matread("prl_trajectories_untreated.mat")
 
-X = read(file,"trajx")
-Y = read(file,"trajy")
+file = matopen("interphase_traj_l100.mat")
+matread("interphase_traj_l100.mat")
+
+dat = read(file,"traj")
+
+#X = read(file,"trajx")
+#Y = read(file,"trajy")
+X = dat[1:100,1:2:end]
+Y = dat[1:100,2:2:end]
 dt = read(file,"t_step")
 
 ln, n = size(X)
@@ -117,12 +123,17 @@ scatter(cX, cY, markerstrokewidth=0,markersize=2,
 
 ## scatter plot
 
+k = 202 # +
+k = 222 # +
+k = 218
 k = 524
+k = 235
 plot(X[:,k],Y[:,k],
     axisratio=1,
     label = "traj no. 524"
 )
-
+scatter!([X[1,k]],[Y[1,k]],label="")
+scatter!([X[100,k]],[Y[100,k]],label="")
 
 
 ##
@@ -131,9 +142,10 @@ scatter(BX[1,:],BY[1,:], markerstrokewidth=0,markersize=2, label = "",
     axisratio = 1,
     xlabel = "log10 D x",
     ylabel = "log10 D y",
+    #color = cgrad([:red,:blue])[(1:n) ./ n]
 )
 
-scatter(BX[1,:],BX[2,:], markerstrokewidth=0,markersize=2, 
+scatter(B[1,:],B[2,:], markerstrokewidth=0,markersize=2, 
     label = "D along x axis",
     xlabel = "log10 D",
     ylabel = "H",
@@ -148,9 +160,9 @@ scatter(BX[1,:],BX[2,:], markerstrokewidth=0,markersize=2,
 
 ## rotated scatter
 
-scatter!(BrX[1,:],BrX[2,:], markerstrokewidth=0,markersize=2, 
+scatter(B[1,:],B[2,:], markerstrokewidth=0,markersize=2, 
     label = "D along 45 deg axis",
-    ylabel = "H",
+    ylabel = "α",
 )
 
 scatter(BrX[1,:],BrY[1,:], markerstrokewidth=0,markersize=2, label = "")

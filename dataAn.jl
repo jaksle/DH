@@ -5,9 +5,23 @@ using Plots, MAT, ProgressMeter
 file = matopen("prl_trajectories_untreated.mat")
 matread("prl_trajectories_untreated.mat")
 
-X = read(file,"trajx")
-Y = read(file,"trajy")
+#X = read(file,"trajx")
+#Y = read(file,"trajy")
 dt = read(file,"t_step")
+
+ln, n = size(X)
+
+##
+
+file = matopen("interphase_traj_l100.mat")
+matread("interphase_traj_l100.mat")
+
+dat = read(file,"traj")
+
+#X = read(file,"trajx")
+#Y = read(file,"trajy")
+X = dat[1:100,1:2:end]
+Y = dat[1:100,2:2:end]
 
 ln, n = size(X)
 ##
@@ -23,14 +37,13 @@ lmsd = log10.(msd)
 
 ts = dt*(1:ln-1)
 Ts = [ones(ln-1) log10.(ts)]
-l = 10
+l = 20
 
 B = Matrix{Float64}(undef, 2, n)
 for i in 1:n
     B[:,i] .= (Ts[1:l,:]'*Ts[1:l,:])^-1*Ts[1:l,:]'*lmsd[1:l,i]
 end
 
-B[2,:] ./= 2
 
 ## OLS an
 
@@ -58,19 +71,19 @@ end
 gB = Matrix{Float64}(undef, 2, n)
 
 for i in 1:n
-    j = findfirst(hs .>= B[2,i])
+    j = findfirst(hs .>= B[2,i]/2)
     j === nothing && (j = length(hs))
     gB[:,i] .= (Ts'*errC[:,:,j]^-1*Ts)^-1*Ts'*errC[:,:,j]^-1*lmsd[:,i]
 end
 
-gB[2,:] ./= 2
 
 
 ## GLS an
 
+scatter(B[1,:],B[2,:], markerstrokewidth=0,markersize=2, label = "OLS")
 scatter!(gB[1,:],gB[2,:], markerstrokewidth=0,markersize=2, 
     xlabel = "log10 D",
-    ylabel = "H",
+    ylabel = "α",
     label = "GLS",
 )
 
@@ -92,7 +105,7 @@ scatter(gB[1,:],dD, markerstrokewidth=0,markersize=2, label = "")
 using KernelDensity
 
 d = kde((B[1,:],B[2,:]))
-heatmap(d.x,d.y,d.density)
+heatmap(d.x,d.y,d.density')
 
 
 ## linear plot
