@@ -60,7 +60,7 @@ pal = palette([palette(:tab10)[4],palette(:tab10)[5],palette(:tab10)[1]],hl)
     )
 
     plot!( 10 .^ mlmsd,
-        label = (L"H = " * @sprintf "%.2f" H0 ),
+        label = (L"α = " * @sprintf "%.1f" 2H0 ),
         linecolor = col,
     )
     plot!( (1:m) .^(2H0) .* 10 .^( .- log(10)*lerrV.(1:m,ln,f,10) ./2 ),

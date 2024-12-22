@@ -7,7 +7,7 @@ hs = 0.2:0.01:0.6
 lenH = length(hs)
 b = 10
 ln = 100
-m = 50
+m = 99
 n = 10^4
 ts = 1:ln
 
@@ -21,20 +21,20 @@ M = Array{Float64}(undef,lenH,m,m)
     M[a,:,:] .= [1/(log(b))^2*theorCovEff(i,j,ln,f)/(f(ts[i],ts[i])*f(ts[j],ts[j])) for i in 1:m, j in 1:m]
 end
 
-n = 10^5
+
 Ts = [ones(m) log10.(ts[1:m])]
 gR = [(Ts'*M[a,:,:]^-1*Ts)^-1*Ts'*M[a,:,:]^-1 for a in 1:lenH]
 
 
-R = (Ts'*Ts)^-1*Ts'
-vlD[k] = var(B[1,:])
-v2H[k] = var(B[2,:])
+#R = (Ts'*Ts)^-1*Ts'
+
 
 Res1 = Matrix{Float64}(undef,lenH,lenH)
 Res2 = similar(Res1)
 Res3 = similar(Res1)
 
 
+n = 10^5
 
 @showprogress for (a,h) in enumerate(hs)
     f = (s,t) -> 1/2*(t^(2h)+s^(2h)-abs(s-t)^(2h))
@@ -119,7 +119,7 @@ plot!([],[],
     legend = :topleft,
 )
 
-savefig("inputHslice.pdf")
+#savefig("inputHslice.pdf")
 ## heatmap plots
 
 heatmap(hs,hs,Res1',
