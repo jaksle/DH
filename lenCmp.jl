@@ -24,11 +24,12 @@ end
 lmsd = log10.(msd)
 
 ##
+lns = 2:50
 Ts = [ones(ln) log10.(ts)]
 thcM = @showprogress [theorCovEff(i,j,ln,K)/(K(ts[i],ts[i])*K(ts[j],ts[j])) for i in 1:lns[end], j in 1:lns[end]]
 
 
-lns = 2:50
+
 vlD = Vector{Float64}(undef,length(lns))
 v2H = similar(vlD)
 vC = similar(vlD)
