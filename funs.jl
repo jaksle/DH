@@ -45,7 +45,7 @@ function theorCovEff(k,l,ln,K) # zakres h?
         else
             ln-k-h+1
         end
-    return 2/((ln-k)*(ln-l)) *( sum(N1(h)*incrCov(1,h,k,l,K)^2 for h in 1:ln-l) + sum( N2(h)*incrCov(h,1,k,l,K)^2 for h in 1:ln-k ) )
+    return 2/((ln-k)*(ln-l)) *( sum(N1(h)*incrCov(1,h,k,l,K)^2 for h in 2:ln-l) + sum( N2(h)*incrCov(h,1,k,l,K)^2 for h in 1:ln-k ) )
 end
 
 
