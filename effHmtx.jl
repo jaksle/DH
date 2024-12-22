@@ -86,22 +86,22 @@ end
 
 ## plot optimum
 
-plot(hs,res1,
+plot(2hs,res1,
     fontfamily = "Computer Modern",
     ribbon=  (zeros(lenH),-res1),
     ylim = (minimum(res1),maximum(res1)),
-    xlabel = L"input $H$",
-    title = L"true $H=0.3$",
+    xlabel = L"input $α$",
+    title = L"true $α=0.6$",
     ylabel = L"{}_\mathrm{tw}\mathrm{var}(\log{}_{10}\hat D)",
     label = "",
-    xlim = (0.2,0.6),
-    xticks = 0.2:0.1:0.6,
+    xlim = (0.4,1.2),
+    xticks = 0.4:0.2:1.2,
     linewidth = 2,
 )
-plot!(twinx(),hs,res2,
+plot!(twinx(),2hs,res2,
     color =palette(:default)[2],
-    xlim = (0.2,0.6),
-    ylabel = L"{}_\mathrm{tw}\mathrm{var}(2\hat H)",
+    xlim = (0.4,1.2),
+    ylabel = L"{}_\mathrm{tw}\mathrm{var}(\hat α\,)",
     label = "",
     ribbon=  (zeros(lenH),-res2),
     ylim = (minimum(res2),maximum(res2)),
@@ -115,32 +115,31 @@ plot!([],[],
 plot!([],[],
     linewidth = 2,
     color = palette(:default)[2],
-    label = L"estimation of $H$",
+    label = L"estimation of $α$",
     legend = :topleft,
 )
 
 #savefig("inputHslice.pdf")
 ## heatmap plots
 
-heatmap(hs,hs,Res1',
-    title = L"{}_\mathrm{tw}\mathrm{var}(\log\!{}_{10} D)", 
-    xlabel = L"true $H$",
-    ylabel = L"GLS input $H$",
+heatmap(2hs,2hs,Res1',
+    title = L"{}_\mathrm{tw}\mathrm{var}(\log\!{}_{10}\hat D)", 
+    xlabel = L"true $α$",
+    ylabel = L"GLS input $α$",
     fontfamily = "Computer Modern",
-    xlim = (0.2,0.6),
-    xticks = 0.2:0.1:0.6,
+    xlim = (0.4,1.2),
+    xticks = 0.4:0.2:1.2,
     axisratio = 1,
-    color = :magma,
 )
 savefig("inputH_D.pdf")
 
-heatmap(hs,hs,Res2',
-    title = L"{}_\mathrm{tw}\mathrm{var}(2H)", 
-    xlabel = L"true $H$",
-    ylabel = L"GLS input $H$",
+heatmap(2hs,2hs,Res2',
+    title = L"{}_\mathrm{tw}\mathrm{var}(\hat α)", 
+    xlabel = L"true $α$",
+    ylabel = L"GLS input $α$",
     fontfamily = "Computer Modern",
-    xlim = (0.2,0.6),
-    xticks = 0.2:0.1:0.6,
+    xlim = (0.4,1.2),
+    xticks = 0.4:0.2:1.2,
     clims = (0.01,0.0225),
     axisratio = 1
 )
