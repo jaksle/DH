@@ -140,20 +140,19 @@ heatmap(2hs,2hs,Res2',
     fontfamily = "Computer Modern",
     xlim = (0.4,1.2),
     xticks = 0.4:0.2:1.2,
-    clims = (0.01,0.0225),
+    clims = (0.01,0.0275),
     axisratio = 1
 )
 savefig("inputH_H.pdf")
 
-heatmap(hs,hs,Res3',
-    title = L"{}_\mathrm{tw}\mathrm{cov}(\log\!{}_{10} D, 2H)", 
-    xlabel = L"true $H$",
-    ylabel = L"GLS input $H$",
+heatmap(2hs,2hs,Res3' ./ sqrt.(Res2' .* Res1'),
+    title = L"{}_\mathrm{tw}\mathrm{corr}(\log\!{}_{10}\hat D,\hat α)", 
+    xlabel = L"true $α$",
+    ylabel = L"GLS input $α$",
     fontfamily = "Computer Modern",
     color = :turbo,
-    xlim = (0.2,0.6),
-    xticks = 0.2:0.1:0.6,
-    #clims = (0.01,0.0225),
+    xlim = (0.4,1.2),
+    xticks = 0.4:0.2:1.2,
     axisratio = 1
 )
 savefig("inputH_DH.pdf")

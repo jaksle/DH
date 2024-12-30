@@ -90,7 +90,7 @@ fB[1,:] .-= log10(2)
 
 ts = dt*(1:ln-1)
 Ts = [ones(ln-1) log10.(ts)]
-l = 20
+l = 10
 
 B = Matrix{Float64}(undef, 2, n)
 for i in 1:n
@@ -113,24 +113,35 @@ scatter(B[1,:],B[2,:],
 
 hs = 0.05:0.01:0.8
 errC = Array{Float64}(undef,ln-1,ln-1,length(hs))
+bias = Array{Float64}(undef,ln-1,length(hs))
 
 @showprogress for k in eachindex(hs)
     D0, H0 = 1, hs[k]
     f = (s,t) -> D0/2*(t^(2H0)+s^(2H0)-abs(s-t)^(2H0)) # no ln(10)
-    errC[:,:,k] .= [theorCovEff(i,j,ln,f)/(ts[i]^(2hs[k])*ts[j]^(2hs[k])) for i in 1:ln-1, j in 1:ln-1]
+    errC[:,:,k] .= [theorCovEff(i,j,ln,f)/(ts[i]^(2hs[k])*ts[j]^(2hs[k])) * 1/(log(10)^2) for i in 1:ln-1, j in 1:ln-1]
 end
 
+@showprogress for k in eachindex(hs)
+    bias[:,k] .=  -log(10) .* diag(errC[:,:,k]) ./2
+end
 
 ## GLS fit
 
 gB = Matrix{Float64}(undef, 2, n)
+bB = Matrix{Float64}(undef, 2, n)
+
+
 
 for i in 1:n
     j = findfirst(hs .>= B[2,i]/2) # H not α
     j === nothing && (j = length(hs))
-    gB[:,i] .= (Ts'*errC[:,:,j]^-1*Ts)^-1*Ts'*errC[:,:,j]^-1*lmsd[:,i]
+    gR = (Ts'*errC[:,:,j]^-1*Ts)^-1*Ts'*errC[:,:,j]^-1
+    gB[:,i] .= gR*lmsd[:,i]
+    bB[:,i] .= gR*(lmsd[:,i] .- bias[:,j])
 end
+
 gB[1,:] .-= log10(4)
+bB[1,:] .-= log10(4)
 
 
 ## GLS an
@@ -144,17 +155,17 @@ scatter(B[1,:],B[2,:],
     xlabel = "log10 D",
     ylabel = "α",
 )
-scatter!(gB[1,:],gB[2,:],
+scatter!(bB[1,:],bB[2,:],
     markerstrokewidth=0,
     markersize=1,
     alpha = 0.5,
-    color = :red,
+    #color = :red,
     label = "GLS"
 )
 
-var(B[1,:]), var(gB[1,:])
-var(B[2,:]), var(gB[2,:])
-cov(B[1,:],B[2,:]), cov(gB[1,:],gB[2,:])
+var(B[1,:]), var(gB[1,:]), var(bB[1,:])
+var(B[2,:]), var(gB[2,:]), var(bB[2,:])
+cov(B[1,:],B[2,:]), cov(gB[1,:],gB[2,:]), cov(bB[1,:],bB[2,:])
 
 da = gB[2,:] .- B[2,:]
 dD = gB[1,:] .- B[1,:]
@@ -196,10 +207,39 @@ mean(B[2,filter])
 ## density
 using KernelDensity
 
-d = kde((B[1,:],B[2,:]))
-heatmap(d.x,d.y,d.density')
+d = kde((gB[1,:],gB[2,:]))
+heatmap(d.x,d.y,d.density',
+    ylim = (-0.1,1.5),
+    label = "OLS",
+    xlabel = "log10 D",
+    ylabel = "alpha",
+    title = "OLS"
+)
 
+## expectation maximisation
+using ExpectationMaximization
 
+# ex
+mix_guess = MixtureModel([Normal(1,1), Normal(2,1)], [1/2, 1/2]) 
+X = [rand()> 1/2 ? randn() : 2randn() + 4 for _ in 1:10^4]
+histogram(X, normed=true)
+
+ft = fit_mle(mix_guess, X; display = :iter, atol = 1e-3, robust = false,)
+plot!(x->pdf(ft,x),-2.5,10, linewidth = 2)
+
+mix_guess = MixtureModel(
+    [MvNormal([-4.,0.1],0.1*[0.41 0; 0 0.1]), 
+    MvNormal([-2.,0.6],0.2*[0.41 0; 0 0.1]), 
+    MvNormal([-3.5,0.3],[0.41 0; 0 0.1])], [1/3, 1/3, 1/3]) 
+
+ft = fit_mle(mix_guess, B; display = :iter, atol = 1e-3, robust = false,)
+gft = fit_mle(mix_guess, gB; display = :iter, atol = 1e-3, robust = false,)
+pV =  [pdf(gft,[x,y]) for x in LinRange(-5,-1,200), y in LinRange(-0.1,1.8,200) ]
+heatmap(LinRange(-5,-1,200),LinRange(-0.1,1.8,200), pV')
+
+contour!(LinRange(-6,-2,200),LinRange(-0.1,1.8,200),(x,y)->pdf(ft.components[1],[x,y]),
+    linecolor = :white,
+)
 ## linear plot
 
 k = 70
