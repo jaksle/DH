@@ -49,6 +49,7 @@ function theorCovEff(k,l,ln,K) # zakres h?
 end
 
 
+
 errV(k,ln,K) = theorCov(k,k,ln,K)
 lerrV(k,ln,K,b = ℯ) = theorCov(k,k,ln,K)/(log(b)*K(k,k))^2
 
