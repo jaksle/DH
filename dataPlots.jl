@@ -4,7 +4,7 @@ using Statistics, HypothesisTests, Distributions, LinearAlgebra
 ##
 
 file = matopen("interphase_traj_l100.mat")
-matread("interphase_traj_l100.mat")
+#matread("interphase_traj_l100.mat")
 
 dat = read(file,"traj")
 
@@ -41,8 +41,8 @@ end
 
 lmsd = log10.(msd)
 
-lts = log10.(ts)
-Ts = [ones(ln-1) log10.(ts)]
+lts = log10.(ts[1:ln-1])
+Ts = [ones(ln-1) lts]
 l = 10
 
 B = Matrix{Float64}(undef, 2, n)
@@ -69,67 +69,135 @@ bB[1,:] .-= log10(4)
 
 ## msd traj plot
 
- k = 960 # 960 220 550! 880!
+
 
 xt = [0.1,0.2,0.3,0.4,0.5,1,2,3,4,5]
-yt = [10^-3, 5*10^-3, 10^-2, 5*10^-2, 10^-1]
+yt = [10^-3, 5*10^-3, 10^-2, 5*10^-2, 10^-1,1]
+
 ## making plots
 
+k = 470# 220! 470!  550 880
 j = findfirst(hs .>= B[2,k]/2)
+errVar = diag(errC[:,:,j])
 
- plot(
+p = plot(
     fontfamily = "Computer Modern",
     xlabel = "t [s]",
     ylabel = L"MSD [μm$^2$]",
     xticks = (log10.(xt), string.(xt)),
-    yticks = (log10.(yt), [L"10^{-3}",L"5\!\cdot\! 10^{-3}", L"10^{-2}", L"5\!\cdot\! 10^{-2}", L"10^{-1}" ]),
+    yticks = (log10.(yt), [L"10^{-3}",L"5\!\cdot\! 10^{-3}", L"10^{-2}", L"5\!\cdot\! 10^{-2}", L"10^{-1}",L"10^0" ]),
+    label = "",
+
     
  )
  scatter!(lts, lmsd[:,k] .-bias[:,j],
     yerrors = sqrt.(2errVar),
-    color = palette(:default)[2],
+    color = palette(:default)[3],
     marker = :square,
     markersize = 3,
+    label = "",
 )
 scatter!(lts, lmsd[:,k],
     marker = :circle,
     markercolor = :white,
     markersize = 3,
     #yerrors = sqrt.(2errVar),
+    label = "original TA-MSD",
 )
 scatter!(lts[1:10], lmsd[1:10,k],
     marker = :circle,
     color = palette(:default)[1],
     markerstrokewidth = 0,
     markersize = 3,
-    #yerrors = sqrt.(2errVar),
+    label = "TA-MSD used for OLS",
+)
+plot!([],[],
+    color = palette(:default)[3],
+    marker = :square,
+    markersize = 3,
+    label = "bias corrected TA-MSD"
 )
 plot!(lt->B[2,k]*lt+B[1,k]+log10(4),minimum(lts),maximum(lts),
     color = palette(:default)[1],
     linestyle = :dash,
-    linewidth = 2,
+    linewidth = 2.5,
+    label = "OLS fit"
 )
 plot!(lt->bB[2,k]*lt+bB[1,k]+log10(4),minimum(lts),maximum(lts),
-    color = palette(:default)[2],
+    color = palette(:default)[3],
     linestyle = :dash,
-    linewidth = 2,
+    linewidth = 2.5,
+    label = "GLS fit"
 )
-#vline!([10])
+
+display(p)
+
+#savefig("trajMSD2.pdf")
 
 ## scatter plot
 
-scatter(B[1,:],B[2,:],
+scatter(bB[1,:],bB[2,:],
     fontfamily = "Computer Modern",
     markerstrokewidth=0,
-    markersize=2,
+    markersize=2.5,
     alpha = 0.3,
-    color = :black,
+    color = palette(:default)[3],
     xticks = (-5:-1, [L"10^{%$s}" for s in -5:-1]),
     xlim = (-5,-0.5),
-    label = "OLS",
+    ylim = (-0.1,1.7),
+    label = "GLS",
     xlabel = L"D\ [\mu m^2/s^{\alpha}]",
     ylabel = L"α\ [1]",
 )
+savefig("scattGLS.pdf")
 
 d = kde((B[1,:],B[2,:]))
 contour!(d.x,d.y,d.density', linecolor=:black)
+
+## changes plot
+
+scatter(B[2,:],bB[2,:],
+    axisratio = 1,
+    fontfamily = "Computer Modern",
+    markerstrokewidth=0,
+    xlim = (-0.15,1.6),
+    ylim = (-0.15,1.6),
+    markersize=1.0,
+    alpha = 0.3,
+    color = palette(:default)[4],
+    xlabel = L"\hat\alpha_{\mathrm{OLS}}\ [1]",
+    ylabel = L"\hat\alpha_{\mathrm{GLS}}\ [1]",
+    label = "estimated α"
+
+)
+plot!(x->x,-0.15,1.5,
+    linestyle = :dash,
+    linewidth = 1,
+    linecolor = :black,
+    label = "reference y = x",
+)
+savefig("jointA.pdf")
+
+scatter(B[1,:],bB[1,:],
+    axisratio = 1,
+    fontfamily = "Computer Modern",
+    markerstrokewidth=0,
+    xlim = (-5,-1),
+    ylim = (-5,-1),
+    xticks = (-5:-1, [L"10^{%$s}" for s in -5:-1]),
+    yticks = (-5:-1, [L"10^{%$s}" for s in -5:-1]),
+    markersize=1.0,
+    alpha = 0.3,
+    color = palette(:default)[6],
+    xlabel = L"\hat D_{\mathrm{OLS}}\ [\mu m^2/s^{\alpha}]",
+    ylabel = L"\hat D_{\mathrm{GLS}}\ [\mu m^2/s^{\alpha}]",
+
+)
+plot!(x->x,-5,-1,
+    linestyle = :dash,
+    linewidth = 1,
+    linecolor = :black,
+    label = "reference y = x",
+)
+
+savefig("jointD.pdf")

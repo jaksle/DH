@@ -9,7 +9,7 @@ n = 10^5
 ln = 100
 ts = 1:ln
 
-K(s,t) = D0/2*(t^(2H0)+s^(2H0)-abs(s-t)^(2H0))
+K = (s,t) -> D0/2*(t^(2H0)+s^(2H0)-abs(s-t)^(2H0))
 S = [K(s,t) for s in ts, t in ts]
 A = cholesky(Symmetric(S)).U
 ξ = randn(length(ts), n)
@@ -24,6 +24,7 @@ end
 lmsd = log10.(msd)
 
 ##
+
 lns = 2:50
 Ts = [ones(ln) log10.(ts)]
 thcM = @showprogress [theorCovEff(i,j,ln,K)/(K(ts[i],ts[i])*K(ts[j],ts[j])) for i in 1:lns[end], j in 1:lns[end]]
@@ -135,7 +136,7 @@ scatter(lns, v2H,
     markerstrokewidth = 0,
     markersize = 3,
     color =palette(:default)[2],
-    title = L"true $H = 0.25$", 
+    title = L"true $α = 0.5$", 
     xlim = (lns[1],lns[end]),
     xticks = vcat(2,5,vec(10:10:50)),
     label = L"OLS estimation of $α$",
