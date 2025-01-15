@@ -76,7 +76,7 @@ yt = [10^-3, 5*10^-3, 10^-2, 5*10^-2, 10^-1,1]
 
 ## making plots
 
-k = 470# 220! 470!  550 880
+k = 4207# 220! 470! 98! 550 880
 j = findfirst(hs .>= B[2,k]/2)
 errVar = diag(errC[:,:,j])
 
@@ -191,6 +191,7 @@ scatter(B[1,:],bB[1,:],
     color = palette(:default)[6],
     xlabel = L"\hat D_{\mathrm{OLS}}\ [\mu m^2/s^{\alpha}]",
     ylabel = L"\hat D_{\mathrm{GLS}}\ [\mu m^2/s^{\alpha}]",
+    label = "estimated D"
 
 )
 plot!(x->x,-5,-1,
