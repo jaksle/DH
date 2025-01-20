@@ -1,6 +1,7 @@
 using Plots, MAT, ProgressMeter, LaTeXStrings
 using Statistics, HypothesisTests, Distributions, LinearAlgebra
 
+include("funs.jl")
 ##
 
 file = matopen("interphase_traj_l100.mat")
@@ -76,7 +77,7 @@ yt = [10^-3, 5*10^-3, 10^-2, 5*10^-2, 10^-1,1]
 
 ## making plots
 
-k = 4207# 220! 470! 98! 550 880
+k = 470# 220! 470! 98 550 880
 j = findfirst(hs .>= B[2,k]/2)
 errVar = diag(errC[:,:,j])
 
@@ -134,6 +135,14 @@ display(p)
 
 #savefig("trajMSD2.pdf")
 
+## errors
+
+K = (s,t) -> 2*10^bB[1,k]*(t^(bB[2,k])+s^(bB[2,k])-abs(s-t)^(bB[2,k]))
+Σ = [theorCovEff(i,i2,ln,K)/(K(ts[i],ts[i])*K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1]
+eM = (Ts'*Σ^-1*Ts)^-1
+eM2 = (Ts[1:l,:]'*Ts[1:l,:])^-1*Ts[1:l,:]'*Σ[1:l,1:l]*Ts[1:l,:]*(Ts[1:l,:]'*Ts[1:l,:])^-1
+
+plot!(t->log10(K(10^t,10^t)),-1,0.8)
 ## scatter plot
 
 scatter(bB[1,:],bB[2,:],
@@ -202,3 +211,8 @@ plot!(x->x,-5,-1,
 )
 
 savefig("jointD.pdf")
+
+##
+
+dlD = B[1,:] .-bB[1,:]
+dA = B[2,:] .-bB[2,:]
