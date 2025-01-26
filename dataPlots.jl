@@ -15,7 +15,7 @@ Y = dat[1:100,2:2:end]
 ln, n = size(X)
 nn = size(dat,2)
 dt = 0.0567
-ts = dt*(1:100)
+ts = dt*(1:ln)
 
 ## GLS prep
 
@@ -77,7 +77,7 @@ yt = [10^-3, 5*10^-3, 10^-2, 5*10^-2, 10^-1,1]
 
 ## making plots
 
-k = 470# 220! 470! 98 550 880
+k = 220# 220! 470! 98 550 880
 j = findfirst(hs .>= B[2,k]/2)
 errVar = diag(errC[:,:,j])
 
@@ -137,8 +137,8 @@ display(p)
 
 ## errors
 
-K = (s,t) -> 2*10^bB[1,k]*(t^(bB[2,k])+s^(bB[2,k])-abs(s-t)^(bB[2,k]))
-Σ = [theorCovEff(i,i2,ln,K)/(K(ts[i],ts[i])*K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1]
+K = (s,t) -> 10^bB[1,k]*(t^(bB[2,k])+s^(bB[2,k])-abs(s-t)^(bB[2,k]))
+Σ = [2theorCovEff(i,i2,ln,K)/(2K(ts[i],ts[i])*2K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1]
 eM = (Ts'*Σ^-1*Ts)^-1
 eM2 = (Ts[1:l,:]'*Ts[1:l,:])^-1*Ts[1:l,:]'*Σ[1:l,1:l]*Ts[1:l,:]*(Ts[1:l,:]'*Ts[1:l,:])^-1
 
