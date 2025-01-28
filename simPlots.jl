@@ -1,4 +1,10 @@
 
+using Plots, ProgressMeter, LaTeXStrings
+using Statistics, HypothesisTests, Distributions, LinearAlgebra
+
+include("funs.jl")
+
+##
 
 H0 = 0.6
 D0  = 1.
@@ -85,3 +91,30 @@ K = (s,t) -> D0*(t^(2H0)+s^(2H0)-abs(s-t)^(2H0))
 Σ = [2theorCovEff(i,i2,ln,K)/(2K(ts[i],ts[i])*2K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1] # factor 2!
 eM = (Ts'*Σ^-1*Ts)^-1
 eM2 = (Ts[1:l,:]'*Ts[1:l,:])^-1*Ts[1:l,:]'*Σ[1:l,1:l]*Ts[1:l,:]*(Ts[1:l,:]'*Ts[1:l,:])^-1
+
+
+C = eM2^-1
+a, b = 2C[1,1]-2C[1,2],2C[1,1]+2C[1,2]
+f(t) = cos(t)/sqrt(a/5.99) # 95% elipse
+g(t) = sin(t)/sqrt(b/5.99)
+
+
+plot!(t->√2/2*(f(t)+g(t)) + log10(D0),t->√2/2*(-f(t)+g(t)) + 2H0,0,2pi,
+    linewidth = 2,
+    color = :black,
+    linestyle = :dash,
+    label = "noise 95% ellipse",
+)
+
+
+f(t) = cos(t)*sqrt(5.99) # 95% elipse
+g(t) = sin(t)*sqrt(5.99)
+
+C = sqrt(eM)
+
+plot!(t->C[1,1]*f(t)+C[1,2]*g(t) + log10(D0),t->C[2,1]*f(t)+C[2,2]*g(t)+ 2H0,0,2pi,
+    linewidth = 2,
+    color = :black,
+    linestyle = :dash,
+    label = "noise 95% ellipse",
+)

@@ -69,11 +69,12 @@ end
 ## ellipse
 
 C =Σ^-1
-A, B = 2C[1,1]-2C[1,2],2C[1,1]+2C[1,2]
+A, B = 2C[1,1]-2C[1,2],2C[1,1]+2C[1,2] # tylko dla równych wariancji
 f(t) = cos(t)/sqrt(A/5.99) # 95% elipse
 g(t) = sin(t)/sqrt(B/5.99)
 
-heatmap(xs,xs,ns)
+
+
 plot!(t->√2/2*(f(t)+g(t)) +0.31,t->√2/2*(-f(t)+g(t)),0,2pi,
     linewidth = 2,
     color = :black,
