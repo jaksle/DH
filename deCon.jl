@@ -163,3 +163,69 @@ X = randn(10^3) .+ 1
 Y = X .+ .√abs.(X) .* randn(10^3)
 
 ft = fit(Normal,Y)
+
+
+## data deConv
+using KernelDensity
+
+lds = LinRange(-5,-0.5,500)
+as = LinRange(-0.1,1.7,500)
+
+den = kde((bB[1,:],bB[2,:]))
+
+heatmap(den.x,den.y,den.density')
+
+D = 10 ^mean(bB[1,:])
+mA = mean(bB[2,:])
+K = (s,t) -> D*(t^(mA)+s^(mA)-abs(s-t)^(mA))
+Σ = [2theorCovEff(i,i2,ln,K)/(2K(ts[i],ts[i])*2K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1]
+eM = (Ts'*Σ^-1*Ts)^-1
+nn= MvNormal([den.x[end÷2], den.y[end÷2]], Symmetric(eM))
+
+ns = [pdf(nn,[x,y]) for x in den.x, y in den.y]
+ns = circshift(ns,(length(den.x)÷2,length(den.y)÷2))
+heatmap(den.x,den.y,ns')
+
+#dec = deconv(den.density,ns,-1)
+zs = den.density
+ins = reverse(ns)
+res = copy(zs)
+for _ in 1:50
+    d = real.(ifft( fft(res) .* fft(ns)))
+    d[abs.(d) .< 10^-12] .= 10^-12
+    res .*= real.(ifft( fft(zs ./ d) .* fft(ins)))
+end
+
+heatmap(den.x,den.y,den.density')
+heatmap(den.x,den.y,res',
+    clim=(0,2)
+)
+
+plotly()
+surface(den.x,den.y,den.density')
+surface(den.x,den.y,res')
+
+
+# histogram - nie działa
+histogram2d(bB[1,:],bB[2,:],bins=(50,50),normalize=:pdf)
+
+nb = 50
+lds = LinRange(-5,-0.5,nb+1)
+As = LinRange(-0.1,1.7,nb+1)
+
+hist = [count((lds[i] .< B[1,:] .< lds[i+1]) .& (As[j] .< B[2,:] .< As[j+1])) for i in 1:nb, j in 1:nb]
+
+heatmap(hist')
+
+ns2 = [pdf(g,[x+step(lds)/2,y+step(As)/2]) for x in lds[1:end-1], y in As[1:end-1]]
+ns2 = circshift(ns2,(nb÷2,nb÷2))
+
+zs = Float64.(hist)
+ins = reverse(ns2)
+res = copy(zs)
+
+for _ in 1:20
+    d = real.(ifft( fft(res) .* fft(ns2)))
+    d[abs.(d) .< 10^-12] .= 10^-12
+    res .*= real.(ifft( fft(zs ./ d) .* fft(ins)))
+end

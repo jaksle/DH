@@ -56,18 +56,21 @@ B[1,:] .-= log10(4)
 
 gB = Matrix{Float64}(undef, 2, n)
 bB = Matrix{Float64}(undef, 2, n)
+#cB = Matrix{Float64}(undef, 2, n)
 
 for i in 1:n
     j = findfirst(hs .>= B[2,i]/2) # H not α
     j === nothing && (j = length(hs))
     gR = (Ts'*errC[:,:,j]^-1*Ts)^-1*Ts'*errC[:,:,j]^-1
+    #cR = (Ts[l+1:end,:]'*errC[l+1:end,l+1:end,j]^-1*Ts[l+1:end,:])^-1*Ts[l+1:end,:]'*errC[l+1:end,l+1:end,j]^-1
     gB[:,i] .= gR*lmsd[:,i]
     bB[:,i] .= gR*(lmsd[:,i] .- bias[:,j])
+    #cB[:,i] .= cR*(lmsd[l+1:end,i] .- bias[l+1:end,j])
 end
 
 gB[1,:] .-= log10(4)
 bB[1,:] .-= log10(4)
-
+#cB[1,:] .-= log10(4)
 ## msd traj plot
 
 
@@ -158,6 +161,7 @@ scatter(bB[1,:],bB[2,:],
     xlabel = L"D\ [\mu m^2/s^{\alpha}]",
     ylabel = L"α\ [1]",
 )
+
 savefig("scattGLS.pdf")
 
 d = kde((B[1,:],B[2,:]))
