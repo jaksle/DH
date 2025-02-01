@@ -173,10 +173,22 @@ as = LinRange(-0.1,1.7,500)
 
 den = kde((bB[1,:],bB[2,:]))
 
-heatmap(den.x,den.y,den.density')
+heatmap(den.x,den.y,den.density',
+    fontfamily = "Computer Modern",
+    title = "Kernel density estimate",
+    xlabel = L"D\ [\mu m^2/s^{\alpha}]",
+    ylabel = L"α\ [1]",
+    xticks = (-5:-1, [L"10^{%$s}" for s in -5:-1]),
+    xlim = (-5,-1),
+    ylim = (-0.1,1.4),
+)
+hline!([0],linestyle=:dash,color=:white,
+    label = "",
+)
+savefig("kde.pdf")
 
-D = 10 ^mean(bB[1,:])
-mA = mean(bB[2,:])
+D = 10 ^ -3 # mean(bB[1,:])
+mA = 0.9 #mean(bB[2,:])
 K = (s,t) -> D*(t^(mA)+s^(mA)-abs(s-t)^(mA))
 Σ = [2theorCovEff(i,i2,ln,K)/(2K(ts[i],ts[i])*2K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1]
 eM = (Ts'*Σ^-1*Ts)^-1
@@ -190,16 +202,29 @@ heatmap(den.x,den.y,ns')
 zs = den.density
 ins = reverse(ns)
 res = copy(zs)
-for _ in 1:50
+for _ in 1:30
     d = real.(ifft( fft(res) .* fft(ns)))
     d[abs.(d) .< 10^-12] .= 10^-12
     res .*= real.(ifft( fft(zs ./ d) .* fft(ins)))
 end
 
 heatmap(den.x,den.y,den.density')
+
 heatmap(den.x,den.y,res',
+    fontfamily = "Computer Modern",
+    title = "Deconvolved density estimate",
+    xlabel = L"D\ [\mu m^2/s^{\alpha}]",
+    ylabel = L"α\ [1]",
+    xticks = (-5:-1, [L"10^{%$s}" for s in -5:-1]),
+    xlim = (-5,-1),
+    ylim = (-0.1,1.4),
     clim=(0,2)
 )
+hline!([0],linestyle=:dash,color=:white,
+    label = "",
+)
+
+savefig("kdeDeconv.pdf")
 
 plotly()
 surface(den.x,den.y,den.density')
