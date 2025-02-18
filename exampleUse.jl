@@ -4,7 +4,7 @@ using Plots
 
 ## exemplary data: simulated fractional Brownian motion
 
-H, D = 0.35, 1 # FBM parameters: Hurst index H and diffusivity D
+H, D = 0.35, 1/2 # FBM parameters: Hurst index H and diffusivity D
 n = 10^4 # number of trajectories
 ln = 100 # trajectory length
 dt = 1. # time interval
@@ -21,3 +21,5 @@ X = A'*ξ
 ## TA-MSD analysis
 
 msd = estMSD(X)
+
+estPar = anDiffFitOLS(msd,ts, 10)

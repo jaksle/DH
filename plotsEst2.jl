@@ -32,10 +32,11 @@ p = plot([],[],
 
 )
 
-hl = length(0.2:0.05:0.5)
+hs = 0.2:0.1:0.5
+hl = length(hs)
 pal = palette([palette(:tab10)[4],palette(:tab10)[5],palette(:tab10)[1]],hl)
 
-@showprogress for (k,H0) in enumerate(0.2:0.05:0.5)
+@showprogress for (k,H0) in enumerate(hs)
 
     f = (s,t) -> D0/2*(t^(2H0)+s^(2H0)-abs(s-t)^(2H0))
     S = [f(s,t) for s in ts, t in ts]
