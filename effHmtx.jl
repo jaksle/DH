@@ -99,7 +99,7 @@ plot(2hs,res1,
     linewidth = 2,
 )
 plot!(twinx(),2hs,res2,
-    color =palette(:default)[2],
+    color =palette(:default)[3],
     xlim = (0.4,1.2),
     ylabel = L"{}_\mathrm{tw}\mathrm{var}(\hat α\,)",
     label = "",
@@ -114,12 +114,13 @@ plot!([],[],
 )
 plot!([],[],
     linewidth = 2,
-    color = palette(:default)[2],
+    color = palette(:default)[3],
     label = L"estimation of $α$",
     legend = :topleft,
 )
 
 #savefig("inputHslice.pdf")
+
 ## heatmap plots
 
 heatmap(2hs,2hs,Res1',
@@ -131,7 +132,7 @@ heatmap(2hs,2hs,Res1',
     xticks = 0.4:0.2:1.2,
     axisratio = 1,
 )
-savefig("inputH_D.pdf")
+#savefig("inputH_D.pdf")
 
 heatmap(2hs,2hs,Res2',
     title = L"{}_\mathrm{tw}\mathrm{var}(\hat α)", 
@@ -143,7 +144,7 @@ heatmap(2hs,2hs,Res2',
     clims = (0.01,0.0275),
     axisratio = 1
 )
-savefig("inputH_H.pdf")
+#savefig("inputH_H.pdf")
 
 heatmap(2hs,2hs,Res3' ./ sqrt.(Res2' .* Res1'),
     title = L"{}_\mathrm{tw}\mathrm{corr}(\log\!{}_{10}\hat D,\hat α)", 
@@ -155,4 +156,4 @@ heatmap(2hs,2hs,Res3' ./ sqrt.(Res2' .* Res1'),
     xticks = 0.4:0.2:1.2,
     axisratio = 1
 )
-savefig("inputH_DH.pdf")
+#savefig("inputH_DH.pdf")

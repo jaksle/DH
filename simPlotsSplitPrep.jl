@@ -46,3 +46,16 @@ eMF[1,2], eMF[2,1] = 0., 0.
 eM2F = copy(eM2)
 eM2F[1,2], eM2F[2,1] = 0., 0.
 
+## looking at weights
+D0, H0 = 10^-3, 0.6
+ln = 100
+dt = 0.0567
+ts = dt*(1:ln)
+lts = log10.(ts[1:ln-1])
+Ts = [ones(ln-1) lts]
+
+
+K = (s,t) -> D0/2*(t^(2H0)+s^(2H0)-abs(s-t)^(2H0)) # no ln(10)
+tC = [2theorCovEff(i,j,ln,K)/(K(ts[i],ts[i])*K(ts[j],ts[j])) * 1/(log(10)^2) for i in 1:ln-1, j in 1:ln-1]
+
+gR = (Ts'*tC^-1*Ts)^-1*Ts'*tC^-1

@@ -1,21 +1,16 @@
 
 using Plots, ProgressMeter, LaTeXStrings
-using Statistics, HypothesisTests, Distributions, LinearAlgebra
+using Statistics, Distributions, LinearAlgebra
 
 include("funs.jl")
 
 ##
 
-H0, D0 = 0.3, 1
 n = 10^4
 ln = 200
 ts = 1:ln
 
-K = (s,t) -> D0*(t^(2H0)+s^(2H0)-abs(s-t)^(2H0))
-S = [K(s,t) for s in ts, t in ts]
-A = cholesky(Symmetric(S)).U
-ξ = randn(length(ts), n)
-#X = A'*ξ .+ cumsum(randn(ln,n),dims=1)
+
 X = cumsum(randn(ln,n),dims=1)
 ##
 
@@ -49,19 +44,20 @@ for i in 1:n
     B1[:,i] .= (Ts[1:l,:]'*Ts[1:l,:])^-1*Ts[1:l,:]'*msd[1:l,i]
 end
 
-w = 10
+w = 11
 B2 = Matrix{Float64}(undef, 2, n)
 for i in 1:n
-    B2[:,i] .= (Ts[w:w+l,:]'*Ts[w:w+l,:])^-1*Ts[w:w+l,:]'*msd[w:w+l,i]
+    B2[:,i] .= (Ts[w:w+l-1,:]'*Ts[w:w+l-1,:])^-1*Ts[w:w+l-1,:]'*msd[w:w+l-1,i]
 end
 
 
 
 ##
+
 gB2 = Matrix{Float64}(undef, 2, n)
 
 tA = 1
-K = (s,t) -> D0/2*(t^(tA)+s^(tA)-abs(s-t)^(tA))
+K = (s,t) -> 1/2*(t^(tA)+s^(tA)-abs(s-t)^(tA))
 Σ = Matrix{Float64}(undef,ln-1,ln-1)
 @showprogress for i in 1:ln-1,i2 in 1:i
     Σ[i,i2] = theorCovEff(i,i2,ln,K)
@@ -70,13 +66,33 @@ end
 
 
 gR = (Ts[w:end,:]'*Σ[w:end,w:end]^-1*Ts[w:end,:])^-1*Ts[w:end,:]'*Σ[w:end,w:end]^-1
+
 for i in 1:n
     gB2[:,i] .= gR*(msd[w:end,i])
 end
 
 eO = (Ts[1:l,:]'*Ts[1:l,:])^-1*Ts[1:l,:]'*Σ[1:l,1:l]*Ts[1:l,:]*(Ts[1:l,:]'*Ts[1:l,:])^-1
-eO2 = (Ts[w:w+l,:]'*Ts[w:w+l,:])^-1*Ts[w:w+l,:]'*Σ[w:w+l,w:w+l]*Ts[w:w+l,:]*(Ts[w:w+l,:]'*Ts[w:w+l,:])^-1
+eO2 = (Ts[w:w+l-1,:]'*Ts[w:w+l-1,:])^-1*Ts[w:w+l-1,:]'*Σ[w:w+l-1,w:w+l-1]*Ts[w:w+l-1,:]*(Ts[w:w+l-1,:]'*Ts[w:w+l-1,:])^-1
 eG = (Ts[w:end,:]'*Σ[w:end,w:end]^-1*Ts[w:end,:])^-1
+
+## weights analysis
+
+ws = Matrix{Float64}(undef,length(w:ln-1),2)
+ll = size(ws)[1]
+for k in 1:ll
+    v = zeros(ll)
+    v[k] = 1
+    ws[k,:] .= gR * v
+end 
+
+l2= 2
+ws2 = Matrix{Float64}(undef,l2,2)
+for k in 1:l2
+    v = zeros(l2)
+    v[k] = 1
+    ws2[k,:] .= (Ts[w:w+l2-1,:]'*Ts[w:w+l2-1,:])^-1*Ts[w:w+l2-1,:]' * v
+end 
+
 
 ## ta-msd plot
 
