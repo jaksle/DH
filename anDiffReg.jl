@@ -47,7 +47,7 @@ function errTAMSD(ts::AbstractVectorVector{T}, w::Integer, K::Function; dim::Int
 
     return Symmetric(errCov), Symmetric(logErrCov)
 end
-ᴮ
+
 """
 MSD = A⋅tᴮ
 
@@ -60,4 +60,3 @@ function anDiffFitOLS(msd::Union{AbstractVector, AbstractMatrix}, ts::AbstractVe
     return estPar
 end
 
-log₁₀A, B
