@@ -1,5 +1,5 @@
 using Plots, MAT, ProgressMeter, LaTeXStrings
-using Statistics, HypothesisTests, Distributions, LinearAlgebra
+using Statistics, Distributions, LinearAlgebra
 
 include("funs.jl")
 ##
@@ -71,12 +71,14 @@ end
 gB[1,:] .-= log10(4)
 bB[1,:] .-= log10(4)
 #cB[1,:] .-= log10(4)
-
-
 ## msd traj plot
+
+
 
 xt = [0.1,0.2,0.3,0.4,0.5,1,2,3,4,5]
 yt = [10^-3, 5*10^-3, 10^-2, 5*10^-2, 10^-1,1]
+
+## making plots
 
 k = 220# 220! 470! 98 550 880
 j = findfirst(hs .>= B[2,k]/2)
@@ -214,58 +216,7 @@ plot!(x->x,-5,-1,
 
 savefig("jointD.pdf")
 
-## changes plot variants 
-p = plot(layout=(2,1))
+##
 
 dlD = B[1,:] .-bB[1,:]
 dA = B[2,:] .-bB[2,:]
-plot!(p[1], [],[],   xlim = (-0.15,1.5),
-ylim = (-0.25,0.5),label="")
-
-scatter!(p[1],B[2,:],dA,
-    #size = (3000,1000),
-    axisratio = 1,
-    fontfamily = "Computer Modern",
-    markerstrokewidth=0,
-    xlim = (-0.15,1.5),
-    ylim = (-0.25,0.5),
-    ratio = 0.5,
-    markersize=1.0,
-    alpha = 0.3,
-    color = palette(:default)[4],
-    xlabel = L"\hat\alpha_{\mathrm{OLS}}\ [1]",
-    ylabel = L"\hat\alpha_{\mathrm{OLS}}\ - \hat\alpha_{\mathrm{GLS}}\ [1]",
-    label = "estimated α"
-
-)
-plot!(p[1],x->0,-0.15,1.5,
-    linestyle = :dash,
-    linewidth = 0.5,
-    linecolor = :black,
-    label = "reference y = 0",
-)
-
-
-scatter!(p[2],B[1,:],dlD,
-    axisratio = 1,
-    fontfamily = "Computer Modern",
-    markerstrokewidth=0,
-    xlim = (-5,-1),
-    ylim = (-0.5,0.5),
-    xticks = (-5:-1, [L"10^{%$s}" for s in -5:-1]),
-    #yticks = (-5:-1, [L"10^{%$s}" for s in -5:-1]),
-    markersize=1.0,
-    alpha = 0.3,
-    color = palette(:default)[6],
-    xlabel = L"\hat D_{\mathrm{OLS}}\ [\mu m^2/s^{\alpha}]",
-    ylabel = L"\log_{10}(\hat D_{\mathrm{OLS}}/D_{\mathrm{GLS}})\ [\log_{10}\mu m^2/s^{\alpha}]",
-    label = "estimated D"
-
-)
-plot!(p[2],x->0,-5,1,
-    linestyle = :dash,
-    linewidth = 0.5,
-    linecolor = :black,
-    label = "reference y = 0",
-)
-
