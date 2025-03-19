@@ -73,7 +73,7 @@ gB[1,:] .-= log10(4)
 bB[1,:] .-= log10(4)
 
 
-## err plot
+## err plot log
 
 xt = [0.1,0.2,0.3,0.4,0.5,1,2,3,4,5]
 yt = [10^-3, 5*10^-3, 10^-2, 5*10^-2, 10^-1,1]
@@ -104,6 +104,56 @@ end
 
 lmsdS = log10.(msdS)
 
+
+
+p = plot(
+    fontfamily = "Computer Modern",
+    xlabel = "t [s]",
+    ylabel = L"MSD [μm$^2$]",
+    #xticks = (log10.(xt), string.(xt)),
+    #yticks = (log10.(yt), [L"10^{-3}",L"5\!\cdot\! 10^{-3}", L"10^{-2}", L"5\!\cdot\! 10^{-2}", L"10^{-1}",L"10^0" ]),
+    label = "",
+    ylim = (0,0.05),
+    xlim = (0,5.5),
+
+ )
+ plot!(ts[1:end-1],msdS[:,1:15],
+    linecolor=palette(:default)[1],
+    #marker = :circle,
+    #markercolor = palette(:default)[1],
+    #markersize = 3,
+    #markerstrokewidth=0,
+    linewidth = 2,
+    alpha=0.2,
+    label = "",
+
+)
+scatter!(ts[1:end-1], msd[:,k],
+    marker = :circle,
+    markercolor = :white,
+    markersize = 3,
+    #yerrors = sqrt.(2errVar),
+    label = "experimental TA-MSD",
+)
+
+plot!(t->4*10^bB[1,k]*t^bB[2,k],minimum(ts),maximum(ts),
+    color = :black,#palette(:default)[3],
+    linestyle = :solid,
+    linewidth = 2.5,
+    label = "MSD fit"
+)
+
+plot!([],[],
+    linecolor=palette(:default)[1],
+    linewidth = 2,
+    alpha=0.2,
+    label = "simulated TA-MSDs"
+)
+
+display(p)
+savefig("err.pdf")
+
+## err plot non-log
 
 
 p = plot(
@@ -149,8 +199,10 @@ plot!([],[],
 )
 
 display(p)
+savefig("err.pdf")
 
-## err heteroscedasticity
+
+## err heteroscedasticity, cor
 
 plot(lts,lmsd[:,k])
 
@@ -159,12 +211,12 @@ ff = @.  bB[2,k]*lts+bB[1,k]+log10(4)
 plot!(lts,ff)
 
 empErr = zeros(99)
-empCov = zeros(99,10)
+empCov = zeros(99,50)
 c = 0
 for j in 1:size(lmsd,2)
     if bB[2,j] > 0.2
         err = @. lmsd[:,j] - (bB[2,j]*lts+bB[1,j]+log10(4))
-        for l in 1:10
+        for l in 1:50
             empCov[:,l] .+= err[l] .* err
         end
         empErr .+= err .^2
@@ -174,14 +226,46 @@ end
 
 empErr ./= c
 empCov ./= c
-empCor = empCov ./ (sqrt.(empErr .* empErr[1:10]'))
+empCor = empCov ./ (sqrt.(empErr .* empErr[1:50]'))
 
 
-plot(empCor[:,1],
 
+scatter(lts[1:end-1],empErr,
+    marker = :square,
+    markercolor = :white,
+    markersize = 3,
+    yscale= :log10,
+    #xscale= :log10,
+    fontfamily = "Computer Modern",
+    xlabel = "t [s]",
+    ylabel = "variance",
+    label = "sample variance of log TA-MD errors",
+    xticks = (log10.(xt), string.(xt)),
+    legend = :topleft,
 )
+savefig("errVar.pdf")
 
-plot!(empCor,
-    #yscale = :log10,
-    #xticks = (log10.(xt), string.(xt)),
+p = plot([],[],
+    fontfamily = "Computer Modern",
+    xlabel = L"index $j$",
+    ylabel = "correlation",
+    label = "",
+    yticks = [-0.4,-0.2,0,0.2,0.4,0.6,0.8,1],
+    #xlim= (0,100),
+    #legend = :centerright,
 )
+lst = [3,5,10,15,20,50]
+cls = palette([:red,:blue],length(lst))
+mrks = [:circle,:square,:utriangle,:diamond,:hexagon,:star]
+for (k,l) in enumerate(lst)
+    plot!(1:99,empCor[:,l],
+        label = L"corr($e_j$,$\.$ $e_k$), $k = %$l$",
+        color = cls[k],
+        marker = mrks[k],
+        markerstrokewidth=0,
+        markersize=2,
+    )
+end
+
+display(p)
+savefig("errCorr.pdf")
