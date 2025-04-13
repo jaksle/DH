@@ -230,6 +230,20 @@ plotly()
 surface(den.x,den.y,den.density')
 surface(den.x,den.y,res')
 
+## porównanie gęstości brzegowych
+denMarg = vec(sum(den.density,dims=1))
+denMarg .*= 1/(sum(denMarg)*step(den.y))
+plot(den.y,denMarg,
+    label = "original density",
+    xlabel = "α"
+)
+denMarg2 = vec(sum(res,dims=1))
+denMarg2 .*= 1/(sum(denMarg2)*step(den.y))
+plot!(den.y,denMarg2,
+    label = "deconvolved density"
+)
+
+savefig("deconvMarg.pdf")
 
 # histogram - nie działa
 histogram2d(bB[1,:],bB[2,:],bins=(50,50),normalize=:pdf)
