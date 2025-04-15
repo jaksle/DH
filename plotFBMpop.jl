@@ -87,7 +87,7 @@ scatter(gB[1,:],gB[2,:], #biased
 )
 mlD = mean(gB[1,:])
 mA = mean(gB[2,:])
-scatter!([mlD],[mA],marker=:xcross,color=palette(:default)[1],markersize = 4,label="")
+scatter!([mlD],[mA],marker=:xcross,color=palette(:default)[1],markersize = 5,markerstrokewidth=2,label="")
 
 f(t) = cos(t)*sqrt(5.99) # 95% elipse
 g1(t) = sin(t)*sqrt(5.99)
@@ -109,7 +109,7 @@ scatter!(bB[1,:],bB[2,:],
 )
 mlD = mean(bB[1,:])
 mA = mean(bB[2,:])
-scatter!([mlD],[mA],marker=:xcross,color=palette(:default)[2],markersize = 4,label="")
+scatter!([mlD],[mA],marker=:xcross,color=palette(:default)[2],markerstrokewidth=2,markersize = 5,label="")
 
 f(t) = cos(t)*sqrt(5.99) # 95% elipse
 g1(t) = sin(t)*sqrt(5.99)
