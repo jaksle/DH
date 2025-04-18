@@ -111,7 +111,7 @@ mlD = mean(bB[1,:])
 mA = mean(bB[2,:])
 scatter!([mlD],[mA],marker=:xcross,color=palette(:default)[2],markerstrokewidth=2,markersize = 5,label="")
 
-f(t) = cos(t)*sqrt(5.9 9) # 95% elipse
+f(t) = cos(t)*sqrt(5.99) # 95% elipse
 g1(t) = sin(t)*sqrt(5.99)
 C = sqrt(cov(bB'))
  
