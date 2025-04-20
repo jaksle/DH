@@ -24,7 +24,7 @@ for _ in 1:100
     res .*= real.(ifft( fft(zs ./ den) .* fft(ins)))
 end
 
-## 1D conv
+## 1D conv ex
 
 xs = LinRange(-5,5,200)
 ys = @. exp(-xs^2)
@@ -53,7 +53,7 @@ heatmap(zs',
 
 #
 
-## singular case
+## singular case ex
 
 ws = real.(ifft(fft(ys) .* fft(ns)))
 
@@ -166,6 +166,7 @@ ft = fit(Normal,Y)
 
 
 ## data deConv
+
 using KernelDensity
 
 lds = LinRange(-5,-0.5,500)
@@ -173,16 +174,19 @@ as = LinRange(-0.1,1.7,500)
 
 den = kde((bB[1,:],bB[2,:]))
 
-heatmap(den.x,den.y,den.density',
+p1 = heatmap(den.x,den.y,den.density',
     fontfamily = "Computer Modern",
-    title = "Kernel density estimate",
+    #title = "Kernel density estimate",
+    title = "original",
     xlabel = L"D\ [\mu m^2/s^{\alpha}]",
     ylabel = L"α\ [1]",
-    xticks = (-5:-1, [L"10^{%$s}" for s in -5:-1]),
+    xticks = (-5:2:-1, [L"10^{%$s}" for s in -5:2:-1]),
     xlim = (-5,-1),
     ylim = (-0.1,1.4),
+    yticks = [-0.1,0,0.2,0.4,0.6,0.8,1,1.2,1.4],
+    colorbar = :none,
 )
-hline!([0],linestyle=:dash,color=:white,
+hline!(p1,[0],linestyle=:dash,color=:white,
     label = "",
 )
 savefig("kde.pdf")
@@ -196,7 +200,7 @@ nn= MvNormal([den.x[end÷2], den.y[end÷2]], Symmetric(eM))
 
 ns = [pdf(nn,[x,y]) for x in den.x, y in den.y]
 ns = circshift(ns,(length(den.x)÷2,length(den.y)÷2))
-heatmap(den.x,den.y,ns')
+#heatmap(den.x,den.y,ns')
 
 #dec = deconv(den.density,ns,-1)
 zs = den.density
@@ -208,23 +212,34 @@ for _ in 1:30
     res .*= real.(ifft( fft(zs ./ d) .* fft(ins)))
 end
 
-heatmap(den.x,den.y,den.density')
+#heatmap(den.x,den.y,den.density')
 
-heatmap(den.x,den.y,res',
+p2 = heatmap(den.x,den.y,res',
     fontfamily = "Computer Modern",
-    title = "Deconvolved density estimate",
+    #title = "Deconvolved density estimate",
+    title = "deconvolved",
     xlabel = L"D\ [\mu m^2/s^{\alpha}]",
-    ylabel = L"α\ [1]",
-    xticks = (-5:-1, [L"10^{%$s}" for s in -5:-1]),
+    #ylabel = L"α\ [1]",
+    color = palette(:viridis),
+    xticks = (-5:2:-1, [L"10^{%$s}" for s in -5:2:-1]),
     xlim = (-5,-1),
     ylim = (-0.1,1.4),
-    clim=(0,2)
+    yticks = [-0.1,0,0.2,0.4,0.6,0.8,1,1.2,1.4],
+    clim=(0,2),
+    colorbar = :none,
+    #colorbar_ticks = 0:0.2:1.6,
 )
 hline!([0],linestyle=:dash,color=:white,
     label = "",
 )
 
 savefig("kdeDeconv.pdf")
+
+## joint plot
+
+
+##
+
 
 plotly()
 surface(den.x,den.y,den.density')
@@ -233,18 +248,40 @@ surface(den.x,den.y,res')
 ## porównanie gęstości brzegowych
 denMarg = vec(sum(den.density,dims=1))
 denMarg .*= 1/(sum(denMarg)*step(den.y))
-plot(den.y,denMarg,
-    label = "original density",
-    xlabel = "α"
-)
 denMarg2 = vec(sum(res,dims=1))
 denMarg2 .*= 1/(sum(denMarg2)*step(den.y))
+
+
+
+
+p3 = plot(den.y,denMarg,
+    fontfamily = "Computer Modern",
+    label = "original density",
+    ylabel = "density",
+    linecolor = palette(:plasma)[100],
+    #xlabel = "α",
+    permute = (:x,:y),
+    xlim = (-0.1,1.4),
+    xticks = [-0.1,0,0.2,0.4,0.6,0.8,1,1.2,1.4],
+)
 plot!(den.y,denMarg2,
-    label = "deconvolved density"
+    label = "deconvolved density",
+    permute = (:x,:y),
+    linecolor = palette(:viridis)[150],
+)
+hline!([0],linestyle=:dash,color=:black,alpha= 0.5,
+    label = "",
 )
 
-savefig("deconvMarg.pdf")
+#savefig("deconvMarg.pdf")
 
+l = @layout [a{0.4w} b{0.4w} c{0.2w}]
+#plot!(p1,legend=(0.5,0.3))
+#plot!(p2,legend=(0.5,0.3))
+#plot!(p3,legend=(0.5,0.3))
+plot(p1,p2,p3,layout = l)
+
+savefig("kdeComp.pdf")
 # histogram - nie działa
 histogram2d(bB[1,:],bB[2,:],bins=(50,50),normalize=:pdf)
 
