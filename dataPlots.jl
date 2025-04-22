@@ -223,38 +223,96 @@ plot!(x->x,-5,-1,
 
 savefig("jointD.pdf")
 
+# difference
+scatter(bB[2,:],bB[2,:] .- B[2,:],
+    markersize = 1,markerstrokewidth = 0, xlabel = "GLS α",ylabel = "GLS α - OLS α", label = "estimates")
+
+denCmp = kde((bB[2,:],bB[2,:] .- B[2,:]))
+
+contour!(denCmp.x,denCmp.y,denCmp.density',)
+
+savefig("OLSvsGLS.pdf")
 ## density plots
 
 using KernelDensity
 
 den1 = kde((B[1,:],B[2,:]), 
-    #bandwidth = (0.05,0.05)
+    bandwidth = (0.06,0.06)
+    #bandwidth = (0.04,0.04)
 )
 den2 = kde((bB[1,:],bB[2,:]),
-    #bandwidth = (0.05,0.05)
+    bandwidth = (0.06,0.06)
+    #bandwidth = (0.04,0.04)
 )
 
-contour(den1.x,den1.y,den1.density',
+heatmap(den2.x,den2.y,den2.density',
+    xlim = (-5,-1),
+    ylim = (-0.1,1.4),
+    color = :OrRd_9,
+    linewidth = 1,
+    #linestyle = :dash,
+)
+
+scatter(B[1,:],B[2,:],
+    fontfamily = "Computer Modern",
+    markerstrokewidth=0,
+    markersize=0.7,
+    alpha = 0.5,
+    #color = :black,
+    color = palette(:default)[1],
+    xticks = (-5:-1, [L"10^{%$s}" for s in -5:-1]),
+    xlim = (-5,-0.5),
+    ylim = (-0.1,1.7),
+    label = "OLS",
+    xlabel = L"D\ [\mu m^2/s^{\alpha}]",
+    ylabel = L"α\ [1]",
+)
+contour!(den1.x,den1.y,den1.density',
     xlim = (-5,-1),
     ylim = (-0.2,1.4),
+    color = :GnBu_9,
 )
-contour(den2.x,den2.y,den2.density',color=:viridis,
+savefig("scattOLS.pdf")
+
+scatter(bB[1,:],bB[2,:],
+    fontfamily = "Computer Modern",
+    markerstrokewidth=0,
+    markersize=0.7,
+    alpha = 0.5,
+    color = palette(:default)[2],
+    xticks = (-5:-1, [L"10^{%$s}" for s in -5:-1]),
+    xlim = (-5,-0.5),
+    ylim = (-0.1,1.7),
+    label = "GLS",
+    xlabel = L"D\ [\mu m^2/s^{\alpha}]",
+    ylabel = L"α\ [1]",
+)
+contour(den2.x,den2.y,den2.density',
     xlim = (-5,-1),
-    ylim = (-0.2,1.4),
+    ylim = (-0.1,1.4),
+    color = :OrRd_9,
+    linewidth = 1,
+    #linestyle = :dash,
 )
+savefig("scattOLS.pdf")
+
 
 xs = LinRange(-5,-1,100)
 ys = LinRange(-0.2,1.4,100)
 df = [pdf(den2,x,y) - pdf(den1,x,y) for x in xs, y in ys]
 
-heatmap(xs,ys,df',color=:plasma,
-    clim = (-0.2,0.2)
+heatmap(xs,ys,df',
+    #color=:balance,
+    color = :seismic,
+    clim = (-0.25,0.25),
+    title = "GLS PDF - OLS PDF"
 )
 #scatter!(bB[1,:],bB[2,:],strokelinewidth=0,markersize=0.2)
 
+savefig("denComp.pdf")
 contour(xs,ys,df',color=:plasma)
 
-nb = 50
+nb = 25
 lds = LinRange(-5,-0.5,nb+1)
 as = LinRange(-0.2,1.4,nb+1)
 
