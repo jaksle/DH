@@ -49,12 +49,12 @@ scatter!(p2,bB[1,:],bB[2,:],
     markerstrokewidth=0,
     markersize=0.5,
     alpha = 0.3,
-    color = palette(:default)[3],
+    color = palette(:default)[2],
     label = "",
 )
 
-scatter!(p1, [log10(D0)],[2H0],marker=:x,color=:red, label = "")
-scatter!(p2, [log10(D0)],[2H0],marker=:x,color=:red, label = "")
+scatter!(p1, [log10(D0)],[2H0],marker=:x,color=:black, label = "")
+scatter!(p2, [log10(D0)],[2H0],marker=:x,color=:black, label = "")
 
 ##
 

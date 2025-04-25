@@ -24,7 +24,7 @@ bias = Array{Float64}(undef,ln-1,length(hs))
     errC[:,:,k] .= [theorCovEff(i,j,ln,f)/(ts[i]^(2hs[k])*ts[j]^(2hs[k])) * 1/(log(10)^2) for i in 1:ln-1, j in 1:ln-1]
 end
 
-@showprogress for k in eachindex(hs)
+for k in eachindex(hs)
     bias[:,k] .=  -log(10) .* diag(errC[:,:,k]) ./2
 end
 
@@ -34,7 +34,7 @@ p1 = scatter([],[],
     fontfamily = "Computer Modern",
     markerstrokewidth=0,
     markersize=0.5,
-    alpha = 0.5,
+    alpha = 0.7,
     #color = palette(:default)[1],
     color = palette(:default)[1],
     xticks = (-3.5:0.25:-2.5, [L"10^{%$s}" for s in -3.5:0.25:-2.5]),
@@ -50,7 +50,7 @@ p2 = scatter([],[],
     fontfamily = "Computer Modern",
     markerstrokewidth=0,
     markersize=0.5,
-    alpha = 0.5,
+    alpha = 0.7,
     color = palette(:default)[1],
     label = "OLS",
     #color = palette(:default)[2],
@@ -71,9 +71,9 @@ p2 = scatter([],[],
 scatter!(p2,[],[],
     markerstrokewidth=0,
     markersize=0.5,
-    alpha = 0.5,
+    alpha = 0.7,
     #color = palette(:default)[1],
-    color = palette(:default)[3],
+    color = palette(:default)[2],
     label = "GLS",
 )
 plot!(p2,[],[],
@@ -82,11 +82,11 @@ plot!(p2,[],[],
     linestyle = :dash,
     label = "error 95% ellipse",
 )
-scatter!(p1, [],[],marker=:x,color=:red,
+scatter!(p1, [],[],marker=:x,color=:black,
     #label = L"exact $(D,\alpha)$"
     label = "",
 )
-scatter!(p2, [],[],marker=:x,color=:red, label = L"exact $(D,\alpha)$")
+scatter!(p2, [],[],marker=:x,color=:black, label = L"exact $(D,\alpha)$")
 
 hline!(p1,[0.,0.7,1.2],linecolor=:black,linestyle=:dash,
     #label = L"exact $\alpha$",
@@ -152,12 +152,12 @@ scatter!(p2,bB[1,:],bB[2,:],
     markerstrokewidth=0,
     markersize=0.5,
     alpha = 0.3,
-    color = palette(:default)[3],
+    color = palette(:default)[2],
     label = "",
 )
 
-scatter!(p1, [log10(D0)],[2H0],marker=:x,color=:red, label = "")
-scatter!(p2, [log10(D0)],[2H0],marker=:x,color=:red, label = "")
+scatter!(p1, [log10(D0)],[2H0],marker=:x,color=:black, label = "")
+scatter!(p2, [log10(D0)],[2H0],marker=:x,color=:black, label = "")
 
 Σ = [2theorCovEff(i,i2,ln,K)/(4K(ts[i],ts[i])*4K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1] # factor 2!
 
@@ -233,13 +233,13 @@ p3 = plot(dOLS.x,dOLS.density, permute=(:x,:y),
     xlim = (-0.1,1.5),
     label = "",
     #xlabel = L"α\ [1]",
-    ylabel = "density",
+    ylabel = L"density $p{}_\alpha$",
     #yscale = :log10,
 )
 plot!(dGLS.x,dGLS.density,permute=(:x,:y),
     label = "",
     xticks = -0.1:0.1:1.5,
-    linecolor = palette(:default)[3],
+    linecolor = palette(:default)[2],
 )
 hline!([0.,0.7,1.2],linecolor=:black,linestyle=:dash,
     #label = L"exact $\alpha$",
@@ -257,4 +257,4 @@ plot!(p2,legend=(0.5,0.3))
 plot!(p3,legend=(0.5,0.3))
 plot(p1,p2,p3,layout = l)
 
-#savefig("simPlots2.pdf")
+savefig("simPlots2.pdf")
