@@ -1,56 +1,26 @@
 
-using BenchmarkTools
 
-function theorCovEff(k,l,ln,K)
-    if k > l
-        k, l = l, k
+# Theil-Sen
+theil = Vector{Float64}(undef,n)
+theilT = fill(NaN,9,9)
+for k in 1:n
+    for i in 1:5, j in i+1:6
+        theilT[i,j] = (lmsd[j,k]-lmsd[i,k])/(lts[j] - lts[i] )
     end
-    N1 = h-> ln-l-h+1
-    N2 = h-> 
-        if h <= l-k+1
-            ln-l
-        else
-            ln-k-h+1
-        end
-    return 2/((ln-k)*(ln-l)) *( sum(N1(h)*incrCov(1,h,k,l,K)^2 for h in 2:ln-l) + sum( N2(h)*incrCov(h,1,k,l,K)^2 for h in 1:ln-k ) )
+    theil[k] = median(filter(!isnan,theilT))
 end
 
 
-H0 = 0.35
-D0  = 1.
-ln = 100
-ts = 1:ln
-n = 10000
+## box fit
+cB = Matrix{Float64}(undef, 2, n)
 
-K(s,t) = D0/2*(abs(t)^(2H0)+abs(s)^(2H0)-abs(s-t)^(2H0))
+l, u = [0.,-Inf], [2.,Inf]
 
 
-
-S1 = [theorCov(k,l,ln,K) for k in 1:50, l in 1:50]
-S2 = [theorCovEff(k,l,ln,K) for k in 1:50, l in 1:50] 
-
-## 
-ln = 7
-k = 1
-l = 3
-
-C = [incrCov(i,j,k,l,K)^2 for i in 1:ln-k, j in 1:ln-l]
-
-f1 = h-> ln-l-h+1
-f2 = h-> 
-    if h <= l-k+1
-        ln-l
-    else
-        ln-k-h+1
-    end
-
-scatter(f1.(2:ln-l))
-
-scatter(f2.(1:ln-k))
-
-sum( incrCov(i,j,k,l,K)^2 for j in l+1:ln, i in k+1:ln )
-
-theorCov(k,l,ln,K)
-theorCovEff(k,l,ln,K)
-##
-
+@showprogress for k in 1:n
+    l, u = [-Inf,0.], [Inf,2.]
+    sA = max(0.01,B[2,k])
+    sA = min(2.,sA)
+    opt = optimize((par) -> sum( (lmsd[1:5,k] .- par[2] .* lts[1:5] .- par[1]) .^2), l, u, [B[1,k],sA])
+    cB[:,k] = Optim.minimizer(opt)
+end

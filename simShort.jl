@@ -7,7 +7,7 @@ include("funs.jl")
 
 ##
 
-H0, D0 = 0.6, 10^-2
+H0, D0 = 0.2, 1.
 n = 10^5
 ln = 10
 dt =  0.0567
@@ -26,7 +26,7 @@ Y = A'*ξ
 
 ## GLS prep
 
-hs = 0.05:0.01:0.8
+hs = 0.05:0.01:0.95
 errC = Array{Float64}(undef,ln-1,ln-1,length(hs))
 bias = Array{Float64}(undef,ln-1,length(hs))
 
@@ -41,7 +41,7 @@ end
 
 ## GLS prep exact
 
-hs = 0.05:0.01:0.8
+hs = 0.05:0.01:0.95
 errCEx = Array{Float64}(undef,ln-1,ln-1,length(hs))
 biasEx = Array{Float64}(undef,ln-1,length(hs))
 msdTemp = Matrix{Float64}(undef,ln-1,n)
@@ -51,12 +51,12 @@ msdTemp = Matrix{Float64}(undef,ln-1,n)
     S = [f(s,t) for s in ts, t in ts]
     A = cholesky(Symmetric(S)).U
     ξ = randn(length(ts), n)
-    X = A'*ξ
+    x = A'*ξ
     ξ = randn(length(ts), n)
-    Y = A'*ξ
+    y = A'*ξ
 
     for i in 1:n
-        msdTemp[:,i] .= estMSD(X[:,i],ln-1) .+ estMSD(Y[:,i],ln-1)  # 2D
+        msdTemp[:,i] .= estMSD(x[:,i],ln-1) .+ estMSD(y[:,i],ln-1)  # 2D
     end
     ltemp = log10.(msdTemp)
     errCEx[:,:,k] .= cov(ltemp')
@@ -75,7 +75,7 @@ end
 lmsd = log10.(msd)
 
 
-l = 2 # window
+l = 5 # window
 
 B = Matrix{Float64}(undef, 2, n)
 for i in 1:n
@@ -83,6 +83,7 @@ for i in 1:n
 end
 
 B[1,:] .-= log10(4)
+
 
 ## GLS fit
 w = 9 # window
@@ -93,6 +94,8 @@ eB = Matrix{Float64}(undef, 2, n)
 for i in 1:n
     j = findfirst(hs .>= B[2,i]/2) # H not α
     j === nothing && (j = length(hs))
+    #jmin, jmax = findfirst(hs .>= 0.2), findfirst(hs .>= 0.5)
+    #j = max(j,jmin); j = min(j,jmax)
     gR = (Ts[1:w,:]'*errC[1:w,1:w,j]^-1*Ts[1:w,:])^-1*Ts[1:w,:]'*errC[1:w,1:w,j]^-1
     gB[:,i] .= gR*lmsd[1:w,i]
     bB[:,i] .= gR*(lmsd[1:w,i] .- bias[1:w,j])
@@ -107,22 +110,25 @@ eB[1,:] .-= log10(4)
 
 ## perfect GLS
 w = 9
-H = H0
+H = 0.5
 
 pB = Matrix{Float64}(undef, 2, n)
-K = (s,t) -> 2D0*(t^(2H)+s^(2H)-abs(s-t)^(2H))
-errM =[theorCovEff(i,j,ln,K)/(K(ts[i],ts[i])*K(ts[j],ts[j])) * 1/(log(10)^2) for i in 1:ln-1, j in 1:ln-1]
+#K = (s,t) -> 2D0*(t^(2H)+s^(2H)-abs(s-t)^(2H))
+#errM =[theorCovEff(i,j,ln,K)/(K(ts[i],ts[i])*K(ts[j],ts[j])) * 1/(log(10)^2) for i in 1:ln-1, j in 1:ln-1]
 
+j = findfirst(hs .>= H) # H not α
+errM = errCEx[:,:,j]
+b2 = biasEx[:,j]
 #errM = cov(lmsd')
-#errVar = diag(errM)
-b2 =  mean(lmsd,dims = 2) .- 2H*lts .+ log10(4D0)  # 2D
+#b2 =  mean(lmsd,dims = 2) .- 2H*lts .- log10(4D0)  # 2D
+
 gR = (Ts[1:w,:]'*errM[1:w,1:w]^-1*Ts[1:w,:])^-1*Ts[1:w,:]'*errM[1:w,1:w]^-1
+
 for i in 1:n
-    #gB[:,i] .= gR*lmsd[1:w,i]
     pB[:,i] .= gR*(lmsd[1:w,i] .- b2[1:w])
 end
 
-#gB[1,:] .-= log10(4)
+
 pB[1,:] .-= log10(4)
 
 ## test ortogonalizacji
@@ -137,15 +143,6 @@ end
 
 ##
 
-
-var(bB[1,:])/var(B[1,:])
-var(eB[1,:])/var(B[1,:])
-var(pB[1,:])/var(B[1,:])
-
-var(bB[2,:])/var(B[2,:])
-var(eB[2,:])/var(B[2,:])
-var(pB[2,:])/var(B[2,:])
-
 mean(B[1,:])
 mean(gB[1,:])
 mean(bB[1,:])
@@ -159,6 +156,13 @@ mean(eB[2,:])
 mean(pB[2,:])
 
 
+var(bB[1,:])/var(B[1,:])
+var(eB[1,:])/var(B[1,:])
+var(pB[1,:])/var(B[1,:])
+
+var(bB[2,:])/var(B[2,:])
+var(eB[2,:])/var(B[2,:])
+var(pB[2,:])/var(B[2,:])
 
 mean(B[2,B[2,:] .> 0])
 mean(gB[2,gB[2,:] .> 0])
@@ -184,14 +188,15 @@ errVar = diag(errM)
 b2 = @. -log(10)*errVar/4
 
 
-##
+## additional plots
 
 
-scatter(B[1,:],B[2,:],
+scatter(B[2,:] .- 2H0,eB[2,:] .- 2H0,
     markerstrokewidth=0,
     markersize=0.5,
     alpha = 0.3,
     color = palette(:default)[1],
+    axisratio = 1,
     label = "",
 )
 
@@ -202,3 +207,7 @@ scatter!(bB[1,:],bB[2,:],
     color = palette(:default)[3],
     label = "",
 )
+
+
+histogram(B[2,:],normed=true)
+histogram!(eB[2,:],alpha=0.5,normed=true)
