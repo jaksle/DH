@@ -24,3 +24,16 @@ l, u = [0.,-Inf], [2.,Inf]
     opt = optimize((par) -> sum( (lmsd[1:5,k] .- par[2] .* lts[1:5] .- par[1]) .^2), l, u, [B[1,k],sA])
     cB[:,k] = Optim.minimizer(opt)
 end
+
+## median OLS
+
+mB = Matrix{Float64}(undef, 2, n)
+v = zeros(2,4)
+for i in 1:n
+    for w in 1:4
+        v[:,w] .= (Ts[1:w+1,:]'*Ts[1:w+1,:])^-1*Ts[1:w+1,:]'*lmsd[1:w+1,i]
+    end
+    mB[1,i], mB[2,i] = median(v[1,:]), median(v[2,:])
+end
+
+mB[1,:] .-= log10(4)
