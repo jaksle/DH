@@ -73,8 +73,6 @@ bB[1,:] .-= log10(4)
 #cB[1,:] .-= log10(4)
 ## msd traj plot
 
-
-
 xt = [0.1,0.2,0.3,0.4,0.5,1,2,3,4,5]
 yt = [10^-3, 5*10^-3, 10^-2, 5*10^-2, 10^-1,1]
 
@@ -315,15 +313,17 @@ heatmap(den1.x,den1.y,df',
     clim = (-0.25,0.25),
     xlim = (-5,-0.5),
     ylim = (-0.1,1.7),
-    title = "Density difference between GLS and OLS",
+    #title = "Density difference between GLS and OLS",
     xticks = (-5:-1, [L"10^{%$s}" for s in -5:-1]),
     label = "GLS",
     xlabel = L"D\ [\mu m^2/s^{\alpha}]",
     ylabel = L"α\ [1]",
     framestyle = :box,
+    titlelocation = :center,
     grid = :on,
 
 )
+annotate!(-2.75,1.6,"Density difference between GLS and OLS")
 
 savefig("datadenDiff.pdf")
 
@@ -373,7 +373,7 @@ p2 = stephist(B[2,:],normed=true,
     label = "OLS ",
     xlim = (-0.1,1.7),
     ylim = (0,2.1),
-    ylabel = L"pdf $p{}_\alpha$",
+    ylabel = L"histogram of $p{}_\alpha$",
     permute = (:x,:y)
 )
 stephist!(bB[2,:],normed=true,
