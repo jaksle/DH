@@ -96,10 +96,10 @@ end
 
 ## ta-msd plot
 
-k = 556
+k = 300 #556
 errVar = diag(Σ)
 
-p = plot(
+p = Plots.plot(
     fontfamily = "Computer Modern",
     xlabel = "t [T]",
     ylabel = L"MSD [L$^2$]",
@@ -107,39 +107,45 @@ p = plot(
     #yticks = (log10.(yt), [L"10^{-3}",L"5\!\cdot\! 10^{-3}", L"10^{-2}", L"5\!\cdot\! 10^{-2}", L"10^{-1}",L"10^0" ]),
     label = "",
     legend = :top,
-    ylim = (1,400),
-    xlim = (1,201),
+    ylim = (0,60),
+    xlim = (1,51),
     #xscale = :log10,
     #yscale = :log10
  )
- scatter!([], [],
+ Plots.scatter!([], [],
     marker = :circle,
     markercolor = :white,
     markersize = 3,
     #yerrors = sqrt.(2errVar),
     label = "TA-MSD",
 )
-plot!(Shape([10,1,1,10],[550,550,1,1]),
+Plots.plot!(Shape([10,0,0,10],[550,550,0,0]),
     color = palette(:default)[1],
     alpha = 0.3,
     linewidth = 0,
     label = "window used for OLS1",
 )
-plot!(Shape([20,10,10,20],[550,550,1,1]),
-    color = palette(:default)[4],
+Plots.plot!(Shape([20,10,10,20],[550,550,0,0]),
+    color = palette(:default)[3],
     alpha = 0.3,
     linewidth = 0,
     label = "window used for OLS2",
 )
-scatter!(ts[1:2:end], msd[1:2:end,k],
-    color = palette(:default)[3],
-    marker = :square,
-    yerrors = sqrt.(errVar[1:2:end]),
-    markersize = 0,
+Plots.plot!(Shape([51,10,10,51],[60,60,0,0]),
+    color = palette(:default)[2],
+    alpha = 0.5,
+    fillstyle = :/,
+    linewidth = 0,
+    label = "window used for GLS",
+)
+Plots.plot!(ts[1:2:end], msd[1:2:end,k],
+    color = :grey,
+    ribbon = sqrt.(errVar[1:2:end]),
+    linewidth = 0,
     label = "",
 )
 
-scatter!(ts, msd[:,k],
+Plots.scatter!(ts, msd[:,k],
     marker = :circle,
     markercolor = :white,
     markersize = 3,
@@ -147,71 +153,81 @@ scatter!(ts, msd[:,k],
     label = "",
 )
 
-plot!(t->B1[2,k]*t+B1[1,k],ts[1],4ts[l],
+Plots.plot!(t->B1[2,k]*t+B1[1,k],ts[1],ts[end],
     color = palette(:default)[1],
     linestyle = :dash,
     linewidth = 2.5,
     label = "OLS1 fit"
 )
-plot!(t->B2[2,k]*t+B2[1,k],ts[w],maximum(ts),
-    color = palette(:default)[4],
+Plots.plot!(t->B2[2,k]*t+B2[1,k],ts[1],maximum(ts),
+    color = palette(:default)[3],
     linestyle = :dash,
     linewidth = 2.5,
     label = "OLS2 fit"
 )
-plot!(t->gB2[2,k]*t+gB2[1,k],ts[w],maximum(ts),
-    color = palette(:default)[3],
+Plots.plot!(t->gB2[2,k]*t+gB2[1,k],ts[1],maximum(ts),
+    color = palette(:default)[2],
     linestyle = :dash,
     linewidth = 2.5,
     label = "GLS fit"
 )
 
+savefig("intervalAnTraj.eps")
 
 ## scatter plot
 
-p = plot(layout=(2,1))
-scatter!(p[1],B2[1,:],B2[2,:] .-1/2,
+p = Plots.plot(layout=(2,1))
+Plots.scatter!(p[1],B2[1,:],B2[2,:] .-1/2,
     fontfamily = "Computer Modern",
     ylabel = L"\hat D\ [L^2/T]",
     xlabel = L"\hat  σ\ [L^2]",
     markerstrokewidth=0,
     markersize=2.0,
     alpha = 0.3,
-    color = palette(:default)[4],
-    label = "OLS2",
+    color = palette(:default)[3],
+    label = "",
     xlim = (-20,20),
     ylim = (-1,3)
 )
-scatter!(p[2],gB2[1,:],gB2[2,:] .-1/2,
+Plots.scatter!(p[2],[],[],
+    markerstrokewidth=0,
+    markersize=2.0,
+    alpha = 0.3,
+    color = palette(:default)[3],
+    label = "OLS2",
+)
+Plots.scatter!(p[2],gB2[1,:],gB2[2,:] .-1/2,
     fontfamily = "Computer Modern",
     ylabel = L"\hat D\ [L^2/T]",
     xlabel = L"\hat σ\ [L^2]",
     markerstrokewidth=0,
     markersize=2.0,
     alpha = 0.3,
-    color = palette(:default)[3],
+    color = palette(:default)[2],
     label = "GLS",
-    xlim = (-25,20),
+    xlim = (-20,20),
     ylim = (-1,3)
 )
 
 f(t) = cos(t)*sqrt(5.99) # 95% elipse
 g1(t) = sin(t)*sqrt(5.99)
 C = sqrt(eO2)
-plot!(p[1],t->C[1,1]*f(t)+C[1,2]*g1(t),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 1/2,0,2pi,
+Plots.plot!(p[1],t->C[1,1]*f(t)+C[1,2]*g1(t),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 1/2,0,2pi,
     linewidth = 1,
     color = :black,
     linestyle = :dash,
-    label = "error 95% ellipse",
+    label = "",
 )
 
 C = sqrt(eG)
-plot!(p[2],t->C[1,1]*f(t)+C[1,2]*g1(t),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 1/2,0,2pi,
+Plots.plot!(p[2],t->C[1,1]*f(t)+C[1,2]*g1(t),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 1/2,0,2pi,
     linewidth = 1,
     color = :black,
     linestyle = :dash,
-    label = "error 95% ellipse",
+    label = "error 95% ellipses",
 )
 
-scatter!(p[1], [0],[1/2],marker=:x,color=:red, label = L"exact $(\sigma, D)$")
-scatter!(p[2], [0],[1/2],marker=:x,color=:red, label = L"exact $(\sigma, D)$")
+Plots.scatter!(p[1], [0],[1/2],marker=:x,color=:black, label = "")
+Plots.scatter!(p[2], [0],[1/2],marker=:x,color=:black, label = L"exact $(\sigma, D)$")
+
+savefig("intervalAnScatt.pdf")

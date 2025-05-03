@@ -245,27 +245,34 @@ scatter(lts[1:end-1],empErr,
 )
 savefig("errVar.pdf")
 
-p = plot([],[],
+p = Plots.plot([],[],
     fontfamily = "Computer Modern",
-    xlabel = L"index $j$",
+    xlabel = L"error index $j$",
     ylabel = "correlation",
     label = "",
     yticks = [-0.4,-0.2,0,0.2,0.4,0.6,0.8,1],
     #xlim= (0,100),
     #legend = :centerright,
 )
+#hline!(p,[0],linestyle = :dash,label = "",color=:black,linewidth=0.5)
 lst = [3,5,10,15,20,50]
-cls = palette([:red,:blue],length(lst))
+pal = :rainbow_bgyr_35_85_c72_n256 #:Set1_3 # :RdYlGn_4
+cls = palette(pal,length(lst)) #palette([:red,:blue],length(lst))
 mrks = [:circle,:square,:utriangle,:diamond,:hexagon,:star]
 for (k,l) in enumerate(lst)
-    plot!(1:99,empCor[:,l],
+    Plots.plot!(1:99,empCor[:,l],
         label = L"corr($e_j$,$\.$ $e_k$), $k = %$l$",
+        linewidth = 0.5,
+        #linealpha = 0.5,
         color = cls[k],
         marker = mrks[k],
         markerstrokewidth=0,
-        markersize=2,
+        markersize=3,
+        xlim = (0,100),
+        framestyle = :origin,
     )
 end
 
 display(p)
+
 savefig("errCorr.pdf")
