@@ -28,8 +28,10 @@ lmsd = log10.(msd)
 lns = 2:50
 Ts = [ones(ln) log10.(ts)]
 thcM = @showprogress [theorCovEff(i,j,ln,K)/(K(ts[i],ts[i])*K(ts[j],ts[j])) for i in 1:lns[end], j in 1:lns[end]]
+bias =  -1/log(10) .* diag(thcM) ./2
 
-
+#plot(log10.(2:50),mean(lmsd,dims=2)[2:50])
+#plot!(log10.(2:50),log10.(K.(ts,ts))[2:50] .+ bias[2:50])
 
 vlD = Vector{Float64}(undef,length(lns))
 v2H = similar(vlD)
@@ -37,6 +39,10 @@ vC = similar(vlD)
 gvlD = Vector{Float64}(undef,length(lns))
 gv2H = similar(vlD)
 gvC = similar(vlD)
+mlD = similar(vlD)
+m2H = similar(vlD)
+gmlD = similar(vlD)
+gm2H = similar(vlD)
 
 @showprogress for (k,m) in enumerate(lns)
     R = (Ts[1:m,:]'*Ts[1:m,:])^-1*Ts[1:m,:]'
@@ -46,11 +52,19 @@ gvC = similar(vlD)
     vC[k] = cov(B[1,:],B[2,:])
 
     gR = (Ts[1:m,:]'*thcM[1:m,1:m]^-1*Ts[1:m,:])^-1*Ts[1:m,:]'*thcM[1:m,1:m]^-1
-    gB = gR * lmsd[1:m,:]
+    gB = gR * (lmsd[1:m,:] .- bias[1:m])
     gvlD[k] = var(gB[1,:])
     gv2H[k] = var(gB[2,:])
     gvC[k] = cov(gB[1,:],gB[2,:])
+
+    mlD[k] = mean(B[1,:])
+    gmlD[k] = mean(gB[1,:])
+    m2H[k] = mean(B[2,:])
+    gm2H[k] = mean(gB[2,:])
 end
+
+#plot(0.5 .- bias1)
+#plot!(0.5 .- bias2)
 
 ## plots
 

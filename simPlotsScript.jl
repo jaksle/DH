@@ -60,8 +60,8 @@ scatter!(p2, [log10(D0)],[2H0],marker=:x,color=:black, label = "")
 
 K = (s,t) -> D0*(t^(2H0)+s^(2H0)-abs(s-t)^(2H0))
 Σ = [2theorCovEff(i,i2,ln,K)/(2K(ts[i],ts[i])*2K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1] # factor 2!
-eM = (Ts'*Σ^-1*Ts)^-1
-eM2 = (Ts[1:l,:]'*Ts[1:l,:])^-1*Ts[1:l,:]'*Σ[1:l,1:l]*Ts[1:l,:]*(Ts[1:l,:]'*Ts[1:l,:])^-1
+eM = (Ts'*Σ^-1*Ts)^-1 # GLS
+eM2 = (Ts[1:l,:]'*Ts[1:l,:])^-1*Ts[1:l,:]'*Σ[1:l,1:l]*Ts[1:l,:]*(Ts[1:l,:]'*Ts[1:l,:])^-1 # OLS
 
 f = t-> cos(t)*sqrt(5.99) # 95% elipse
 g1 = t-> sin(t)*sqrt(5.99)
