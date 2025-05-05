@@ -71,7 +71,7 @@ data = data5
 
 @showprogress for k in eachindex(simH)
     H0, D0 = simH[k], 1.
-    n = 10^5
+    n = 10^6
     ln = 10
     dt =  0.0567
     ts = dt*(1:ln)
@@ -119,4 +119,26 @@ data = data5
 
     data.GLS_bgain[k] = 100 .*(1 .- abs.(data.GLS_bias[k] ./data.OLS_bias[k]))
     data.GLS_vgain[k] = 100 .* (1 .- data.GLS_var[k] ./ data.OLS_var[k])
+end
+
+
+## round
+
+r(x) = round.(x, sigdigits=2)
+
+r.(data)
+
+for row in  1:12
+    R = Float64[]
+    for k in 1:7
+        x = data[row,k]
+        if x isa Tuple
+            push!(R,x[1])
+            push!(R,x[2])
+        else
+            push!(R,x)
+        end
+    end
+
+    r.(R)' |> display
 end
