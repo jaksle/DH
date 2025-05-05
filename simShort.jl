@@ -7,7 +7,7 @@ include("funs.jl")
 
 ##
 
-H0, D0 = 0.2, 1.
+H0, D0 = 0.15, 1.
 n = 10^5
 ln = 10
 dt =  0.0567
@@ -75,7 +75,7 @@ end
 lmsd = log10.(msd)
 
 
-l = 5 # window
+l = 2 # window
 
 B = Matrix{Float64}(undef, 2, n)
 for i in 1:n
@@ -110,7 +110,7 @@ eB[1,:] .-= log10(4)
 
 ## perfect GLS
 w = 9
-H = 0.5
+H = H0
 
 pB = Matrix{Float64}(undef, 2, n)
 #K = (s,t) -> 2D0*(t^(2H)+s^(2H)-abs(s-t)^(2H))
@@ -168,6 +168,12 @@ mean(B[2,B[2,:] .> 0])
 mean(gB[2,gB[2,:] .> 0])
 mean(bB[2,bB[2,:] .> 0])
 mean(eB[2,eB[2,:] .> 0])
+
+var(B[2,B[2,:] .> 0])
+var(gB[2,gB[2,:] .> 0])
+var(bB[2,bB[2,:] .> 0])
+var(eB[2,eB[2,:] .> 0])
+
 
 count(B[2,:] .<= 0 )
 count(bB[2,:] .<= 0 )
