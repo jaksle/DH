@@ -12,7 +12,7 @@ Ts = [ones(ln-1) lts]
 l = 10
 
 B = Matrix{Float64}(undef, 2, n)
-for i in 1:n
+@showprogress for i in 1:n
     B[:,i] .= (Ts[1:l,:]'*Ts[1:l,:])^-1*Ts[1:l,:]'*lmsd[1:l,i]
 end
 
@@ -23,7 +23,7 @@ B[1,:] .-= log10(4)
 gB = Matrix{Float64}(undef, 2, n)
 bB = Matrix{Float64}(undef, 2, n)
 
-for i in 1:n
+@showprogress for i in 1:n
     j = findfirst(hs .>= B[2,i]/2) # H not α
     j === nothing && (j = length(hs))
     gR = (Ts'*errC[:,:,j]^-1*Ts)^-1*Ts'*errC[:,:,j]^-1
@@ -37,7 +37,7 @@ bB[1,:] .-= log10(4)
 ##
 
 
-scatter!(p1,B[1,:],B[2,:],
+scatter!(p1,B[1,1:10^4],B[2,1:10^4],
     markerstrokewidth=0,
     markersize=0.5,
     alpha = 0.3,
@@ -45,7 +45,7 @@ scatter!(p1,B[1,:],B[2,:],
     label = "",
 )
 
-scatter!(p2,bB[1,:],bB[2,:],
+scatter!(p2,bB[1,1:10^4],bB[2,1:10^4],
     markerstrokewidth=0,
     markersize=0.5,
     alpha = 0.3,
@@ -70,7 +70,13 @@ C = sqrt(eM2)
 
 plot!(p1, t->C[1,1]*f(t)+C[1,2]*g1(t) + log10(D0),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 2H0,0,2pi,
     linewidth = 1,
-    color = :black,
+    color = :blue,
+    linestyle = :dash,
+    label = "",
+)
+plot!(p2, t->C[1,1]*f(t)+C[1,2]*g1(t) + log10(D0),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 2H0,0,2pi,
+    linewidth = 1,
+    color = :blue,
     linestyle = :dash,
     label = "",
 )
@@ -78,7 +84,7 @@ C = sqrt(eM)
 
 plot!(p2, t->C[1,1]*f(t)+C[1,2]*g1(t) + log10(D0),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 2H0,0,2pi,
     linewidth = 1,
-    color = :black,
+    color = :red,
     linestyle = :dash,
     label = "",
 )

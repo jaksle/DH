@@ -7,8 +7,11 @@ include("funs.jl")
 
 n = 10^4
 ln = 100
-dt = 1
+dt = 0.0567
 ts = dt*(1:ln)
+
+lts = log10.(ts[1:ln-1])
+Ts = [ones(ln-1) lts]
 
 ## GLS prep
 
@@ -28,7 +31,35 @@ end
 
 ##
 
-H0, D0 = 0.35, 1
+## GLS prep exact
+
+n = 10^5
+errCEx = Array{Float64}(undef,ln-1,ln-1,length(hs))
+biasEx = Array{Float64}(undef,ln-1,length(hs))
+msdTemp = Matrix{Float64}(undef,ln-1,n)
+
+@showprogress for k in eachindex(hs) # uwaga 1D czy 2D!
+    f = (s,t) -> 1*(t^(2hs[k])+s^(2hs[k])-abs(s-t)^(2hs[k])) 
+    S = [f(s,t) for s in ts, t in ts]
+    A = cholesky(Symmetric(S)).U
+    ξ = randn(length(ts), n)
+    x = A'*ξ
+    ξ = randn(length(ts), n)
+    y = A'*ξ
+
+    for i in 1:n
+        msdTemp[:,i] .= estMSD(x[:,i],ln-1) .+ estMSD(y[:,i],ln-1)  # 2D
+    end
+    ltemp = log10.(msdTemp)
+    errCEx[:,:,k] .= cov(ltemp')
+
+    biasEx[:,k] .=  mean(ltemp,dims = 2) .- 2hs[k]*lts .- log10(4)  # 2D bias
+end
+
+
+##
+n = 10^4
+H0, D0 = 0.35, 10^-3
 
 K = (s,t) -> D0*(t^(2H0)+s^(2H0)-abs(s-t)^(2H0))
 S = [K(s,t) for s in ts, t in ts]
@@ -46,8 +77,6 @@ end
 
 lmsd = log10.(msd)
 
-lts = log10.(ts[1:ln-1])
-Ts = [ones(ln-1) lts]
 l = 10
 
 B = Matrix{Float64}(undef, 2, n)
@@ -61,17 +90,21 @@ B[1,:] .-= log10(4)
 
 gB = Matrix{Float64}(undef, 2, n)
 bB = Matrix{Float64}(undef, 2, n)
-
+eB = Matrix{Float64}(undef, 2, n)
 for i in 1:n
     j = findfirst(hs .>= B[2,i]/2) # H not α
     j === nothing && (j = length(hs))
     gR = (Ts'*errC[:,:,j]^-1*Ts)^-1*Ts'*errC[:,:,j]^-1
     gB[:,i] .= gR*lmsd[:,i]
     bB[:,i] .= gR*(lmsd[:,i] .- bias[:,j])
+
+    gR = (Ts'*errCEx[:,:,j]^-1*Ts)^-1*Ts'*errCEx[:,:,j]^-1
+    eB[:,i] .= gR*(lmsd[:,i] .- biasEx[:,j])
 end
 
 gB[1,:] .-= log10(4)
 bB[1,:] .-= log10(4)
+eB[1,:] .-= log10(4)
 
 ## num prep
 
@@ -84,7 +117,7 @@ f(t) = cos(t)*sqrt(5.99) # 95% elipse
 g1(t) = sin(t)*sqrt(5.99)
 
 
-den = kde((bB[1,:],bB[2,:]),boundary=((-0.2,0.2),(0.4,1.0)),npoints=(500,500) )
+den = kde((eB[1,:],eB[2,:]),boundary=((-3.4,-2.6),(0.4,1.0)),npoints=(500,500) )
 
 
 nn= MvNormal([den.x[end÷2], den.y[end÷2]], Symmetric(eM))
@@ -107,26 +140,27 @@ end
 darkRed = colorant"#cc3434"
 
 with_theme(theme_latexfonts()) do
-fig = Figure(size=(1200,400))
-xlab = [L"10^{%$i}" for i in -0.15:0.05:0.15]
-xlab[end÷2+1] = L"1"
+fig = Figure(size=(1200,400),figure_padding=(0,20,0,0))
+xlab = [L"10^{%$i}" for i in -3.4:0.2:-2.6]
+xlab[end÷2+1] = L"10^{-3}"
+xname = L"{D}\ [\mu m^2/s^\alpha]"
 ax = Axis(fig[1,1],
-    xticks = (-0.15:0.05:0.15,xlab),
-    limits = (-0.15,0.15, 0.4,1),
+    xticks = (-3.4:0.2:-2.6,xlab),
+    limits = (-3.4,-2.6, 0.4,1),
     title = "Step 1: points and predicted errors",
     titlesize = 20,
     xlabelsize= 20,
     ylabelsize = 20,
-    xlabel = L"\hat{D}",
-    ylabel = L"\hat{\alpha}",
+    xlabel = xname,
+    ylabel = L"{\alpha}\ [1]",
     xgridvisible = false,
     ygridvisible = false,
 )
-gls= scatter!(ax,bB[1,:],bB[2,:],
+gls = scatter!(ax,eB[1,:],eB[2,:],
     #markerstrokewidth=0,
-    markersize=8,
+    markersize=6,
     alpha = 0.15,
-    color = darkRed,
+    color = :tomato, #darkRed,
     #label = "",
 
 )
@@ -149,9 +183,9 @@ conf = lines!(ax,xs,ys ,
 
 
 ax2 = Axis(fig[1,2],
-    xticks = (-0.15:0.05:0.15,xlab),
-    xlabel = L"\hat{D}",
-    limits = (-0.15,0.15, 0.4,1),
+    xticks = (-3.4:0.2:-2.6,xlab),
+    xlabel = xname,
+    limits = (-3.4,-2.6, 0.4,1),
     title = "Step 2: density estimate",
     titlesize = 20,
     xlabelsize= 20,
@@ -167,9 +201,9 @@ scatter!(ax2, [log10(D0)],[2H0],
 )
 
 ax3 = Axis(fig[1,3],
-    xticks = (-0.15:0.05:0.15,xlab),
-    xlabel = L"\hat{D}",
-    limits = (-0.15,0.15, 0.4,1),
+    xticks = (-3.4:0.2:-2.6,xlab),
+    xlabel = xname,
+    limits = (-3.4,-2.6, 0.4,1),
     title = "Step 3: deconvolution",
     titlesize = 20,
     xlabelsize= 20,
@@ -182,7 +216,9 @@ cross = scatter!(ax3, [log10(D0)],[2H0],
     markersize = 15,
 )
 
-axislegend(ax,[MarkerElement(color = darkRed, marker=:circle, alpha = 0.5, markersize = 12),  conf, cross,],["GLS","error 95% ellipse",L"exact ($D, \alpha$)",])
+axislegend(ax,[MarkerElement(color = :tomato, marker=:circle, alpha = 0.6, markersize = 12),  conf, cross,],["GLS","error 95% ellipse",L"exact ($D, \alpha$)"],
+    position = :lt,
+)
 fig
 save("decEx.pdf",fig)
 end

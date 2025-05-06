@@ -270,11 +270,11 @@ with_theme(theme_latexfonts()) do
     CairoMakie.ylims!(ax,0.0,0.05)
     CairoMakie.scatter!(ax,lns,v2H,
         label = L"OLS estimation of $α$",
-        color = Cycled(1),
+        color = :dodgerblue2,
     )
     CairoMakie.scatter!(ax,lns,gv2H,
         label = L"GLS estimation of $α$",
-        color = darkRed,
+        color = :tomato,
         marker = :utriangle,
     )
 
@@ -292,11 +292,11 @@ with_theme(theme_latexfonts()) do
     #CairoMakie.ylims!(ax2,0.0,0.045)
     CairoMakie.scatter!(ax2,lns,m2H .- 0.5,
         label = L"OLS estimation of $α$",
-        color = Cycled(1),
+        color = :dodgerblue2,
     )
     CairoMakie.scatter!(ax2,lns,gm2H .-0.5,
         label = L"GLS estimation of $α$",
-        color = darkRed,
+        color = :tomato,
         marker = :utriangle,
     )
 
@@ -304,7 +304,7 @@ with_theme(theme_latexfonts()) do
     ax3 = Axis(fig[1, 2],
         #title = L"true $\alpha = 0.5$",
         titlesize = 20, 
-        ylabel = L"var($\hat{D}$)",
+        ylabel = L"var($\log_{10} \hat{D}$)",
         xlabelsize = 20,
         #xlabel = "length of TA-MSD used",
         ylabelsize = 20,
@@ -315,11 +315,11 @@ with_theme(theme_latexfonts()) do
     CairoMakie.ylims!(ax3,0.0,0.03)
     CairoMakie.scatter!(ax3,lns,vlD,
         label = L"OLS estimation of $α$",
-        color = Cycled(1),
+        color = :dodgerblue2,
     )
     CairoMakie.scatter!(ax3,lns,gvlD,
         label = L"GLS estimation of $α$",
-        color = darkRed,
+        color = :tomato,
         marker = :utriangle,
     )
 
@@ -337,11 +337,11 @@ with_theme(theme_latexfonts()) do
     #CairoMakie.ylims!(ax3,0.0,0.03)
     s1 = CairoMakie.scatter!(ax4,lns,mlD,
         label = "OLS",
-        color = Cycled(1),
+        color = :dodgerblue2,
     )
     s2 = CairoMakie.scatter!(ax4,lns,gmlD,
         label = "GLS",
-        color = darkRed,
+        color = :tomato,
         marker = :utriangle,
     )
     axislegend(ax4,position=:ct)

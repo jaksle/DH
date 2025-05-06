@@ -65,7 +65,7 @@ p2 = scatter([],[],
 #     linewidth = 1,
 #     color = :black,
 #     linestyle = :dash,
-#     label = "error 95% ellipse",
+#     label = "error 95% ellipses",
 # )
 
 scatter!(p2,[],[],
@@ -102,6 +102,8 @@ hline!(p2,[0.,0.7,1.2],linecolor=:black,linestyle=:dash,
 )
 
 ## trapped 
+n = 10^5
+
 D0, H0 = 10^-3, 0.
 
 X = sqrt(D0)*randn(length(ts), n) # czynnik 2 inny
@@ -120,7 +122,7 @@ Ts = [ones(ln-1) lts]
 l = 10
 
 B = Matrix{Float64}(undef, 2, n)
-for i in 1:n
+@showprogress for i in 1:n
     B[:,i] .= (Ts[1:l,:]'*Ts[1:l,:])^-1*Ts[1:l,:]'*lmsd[1:l,i]
 end
 
@@ -129,7 +131,7 @@ B[1,:] .-= log10(4)
 gB = Matrix{Float64}(undef, 2, n)
 bB = Matrix{Float64}(undef, 2, n)
 
-for i in 1:n
+@showprogress for i in 1:n
     j = findfirst(hs .>= B[2,i]/2) # H not α
     j === nothing && (j = length(hs))
     gR = (Ts'*errC[:,:,j]^-1*Ts)^-1*Ts'*errC[:,:,j]^-1
@@ -140,7 +142,7 @@ end
 gB[1,:] .-= log10(4)
 bB[1,:] .-= log10(4)
 
-scatter!(p1,B[1,:],B[2,:],
+scatter!(p1,B[1,1:10^4],B[2,1:10^4],
     markerstrokewidth=0,
     markersize=0.5,
     alpha = 0.3,
@@ -148,7 +150,7 @@ scatter!(p1,B[1,:],B[2,:],
     label = "",
 )
 
-scatter!(p2,bB[1,:],bB[2,:],
+scatter!(p2,bB[1,1:10^4],bB[2,1:10^4],
     markerstrokewidth=0,
     markersize=0.5,
     alpha = 0.3,
@@ -173,7 +175,13 @@ C = sqrt(eM2)
 
 plot!(p1, t->C[1,1]*f(t)+C[1,2]*g1(t) + log10(D0),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 2H0,0,2pi,
     linewidth = 1,
-    color = :black,
+    color = :blue,
+    linestyle = :dash,
+    label = "",
+)
+plot!(p2, t->C[1,1]*f(t)+C[1,2]*g1(t) + log10(D0),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 2H0,0,2pi,
+    linewidth = 1,
+    color = :blue,
     linestyle = :dash,
     label = "",
 )
@@ -181,7 +189,7 @@ C = sqrt(eM)
 
 plot!(p2, t->C[1,1]*f(t)+C[1,2]*g1(t) + log10(D0),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 2H0,0,2pi,
     linewidth = 1,
-    color = :black,
+    color = :red,
     linestyle = :dash,
     label = "",
 )
@@ -222,10 +230,10 @@ dat31, dat32 = copy(B), copy(bB)
 using KernelDensity
 
 aOLS = vcat(dat11[2,:],dat21[2,:],dat31[2,:])
-dOLS = kde(aOLS,bandwidth=0.02)
+dOLS = kde(aOLS)#,bandwidth=0.01)
 
 aGLS = vcat(dat12[2,:],dat22[2,:],dat32[2,:])
-dGLS = kde(aGLS,bandwidth=0.02)
+dGLS = kde(aGLS)#,bandwidth=0.01)
 
 p3 = plot(dOLS.x,dOLS.density, permute=(:x,:y),
     fontfamily = "Computer Modern",
@@ -234,11 +242,13 @@ p3 = plot(dOLS.x,dOLS.density, permute=(:x,:y),
     label = "",
     #xlabel = L"α\ [1]",
     ylabel = L"density $p{}_\alpha$",
+    linewidth = 1.0,
     #yscale = :log10,
 )
 plot!(dGLS.x,dGLS.density,permute=(:x,:y),
     label = "",
     xticks = -0.1:0.1:1.5,
+    linewidth = 1.0,
     linecolor = palette(:default)[2],
 )
 hline!([0.,0.7,1.2],linecolor=:black,linestyle=:dash,

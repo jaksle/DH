@@ -20,7 +20,14 @@ K = (s,t) -> D0*(t^(2H0)+s^(2H0)-abs(s-t)^(2H0))
 S = [K(s,t) for s in ts, t in ts] 
 A = cholesky(Symmetric(S)).U
 ξ = randn(length(ts), n)
-X = A'*ξ .+ σ .* randn(ln,n)
+X = A'*ξ .+ σ .* randn(ln,n) # 1D
+
+## test of err cov
+
+f = (s,t) -> 1*(t^(2H0)+s^(2H0)-abs(s-t)^(2H0)) + ( (s==t) ? 2σ^2 : 0. )
+eM = [theorCovEff(i,j,ln,f) for i in 1:ln-1, j in 1:ln-1]
+
+eMErr = @. 1/(log(10)^2) * ( eM  )
 
 
 ## GLS prep
@@ -30,7 +37,7 @@ errC = Array{Float64}(undef,ln-1,ln-1,length(hs))
 bias = Array{Float64}(undef,ln-1,length(hs))
 
 @showprogress for k in eachindex(hs) # uwaga 1D czy 2D!
-    f = (s,t) -> D0*(t^(2hs[k])+s^(2hs[k])-abs(s-t)^(2hs[k])) + ( (s==t) ? 2σ^2 : 0. )
+    f = (s,t) -> 1*(t^(2hs[k])+s^(2hs[k])-abs(s-t)^(2hs[k])) + ( (s==t) ? 2σ^2 : 0. )
     errC[:,:,k] .= [theorCovEff(i,j,ln,f)/(f(ts[i],ts[i])*f(ts[j],ts[j])) * 1/(log(10)^2) for i in 1:ln-1, j in 1:ln-1]
 end
 
