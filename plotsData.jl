@@ -29,7 +29,7 @@ bias = Array{Float64}(undef,ln-1,length(hs))
     errC[:,:,k] .= [theorCovEff(i,j,ln,f)/(ts[i]^(2hs[k])*ts[j]^(2hs[k])) * 1/(log(10)^2) for i in 1:ln-1, j in 1:ln-1]
 end
 
-@showprogress for k in eachindex(hs)
+for k in eachindex(hs)
     bias[:,k] .=  -log(10) .* diag(errC[:,:,k]) ./2
 end
 

@@ -190,7 +190,7 @@ p1 = Plots.heatmap(den.x,den.y,den.density',
 Plots.hline!(p1,[0],linestyle=:dash,color=:white,
     label = "",
 )
-savefig("kde.pdf")
+#savefig("kde.pdf")
 
 D = 10 ^ -3 # mean(bB[1,:])
 mA = 0.9 #mean(bB[2,:])
@@ -234,7 +234,7 @@ Plots.hline!([0],linestyle=:dash,color=:white,
     label = "",
 )
 
-savefig("kdeDeconv.pdf")
+#savefig("kdeDeconv.pdf")
 
 ## joint plot
 
@@ -246,6 +246,7 @@ surface(den.x,den.y,den.density')
 surface(den.x,den.y,res')
 
 ## porównanie gęstości brzegowych
+res ./= (sum(res)*step(den.x)*step(den.y))
 denMarg = vec(sum(den.density,dims=1))
 denMarg .*= 1/(sum(denMarg)*step(den.y))
 denMarg2 = vec(sum(res,dims=1))
@@ -269,7 +270,7 @@ p3 = Plots.plot(den.y,denMarg,
 Plots.plot!(den.y,denMarg2,
     label = "deconvolved density",
     permute = (:x,:y),
-    linewidth = 1.5,
+    linewidth = 1,
     linecolor = palette(:viridis)[150],
 )
 Plots.hline!([0],linestyle=:dash,color=:black,alpha= 0.5,
@@ -293,10 +294,11 @@ savefig("kdeComp.pdf")
 using KernelDensity,FFTW
 
 den = kde((bB[1,:],bB[2,:]))
+den = dA2
 
-Makie.heatmap(den.x,den.y,den.density)
+heatmap(den.x,den.y,den.density')
 
-# test run
+# init run
 mA = 0.15 #mean(bB[2,:])
 K = (s,t) -> 1*(t^(mA)+s^(mA)-abs(s-t)^(mA))
 Σ = [2theorCovEff(i,i2,ln,K)/(2K(ts[i],ts[i])*2K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1]
@@ -317,13 +319,13 @@ for _ in 1:100
     res .*= real.(ifft( fft(zs ./ d) .* fft(ins)))
 end
 
-Makie.heatmap(den.x,den.y,res)
+heatmap(den.x,den.y,res')
 
 
 resI = copy(res)
 j = findfirst(den.y .> 0.15)
-
-@showprogress for k in j:256
+j2 = findlast(den.y .< 1.0)
+@showprogress for k in j:j2
     mA = den.y[k] 
     K = (s,t) -> 1*(t^(mA)+s^(mA)-abs(s-t)^(mA))
     Σ = [2theorCovEff(i,i2,ln,K)/(2K(ts[i],ts[i])*2K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1]
@@ -346,5 +348,60 @@ j = findfirst(den.y .> 0.15)
     resI[:,k] .= res[:,k]
 end
 
+mA = 1.0 #mean(bB[2,:])
+K = (s,t) -> 1*(t^(mA)+s^(mA)-abs(s-t)^(mA))
+Σ = [2theorCovEff(i,i2,ln,K)/(2K(ts[i],ts[i])*2K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1]
+eM = (Ts'*Σ^-1*Ts)^-1
+nn= MvNormal([den.x[end÷2], den.y[end÷2]], Symmetric(eM))
 
-Makie.heatmap(den.x,den.y,resI)
+ns = [pdf(nn,[x,y]) for x in den.x, y in den.y]
+ns = circshift(ns,(length(den.x)÷2,length(den.y)÷2))
+#heatmap(den.x,den.y,ns')
+
+#dec = deconv(den.density,ns,-1)
+zs = den.density
+ins = reverse(ns)
+res = copy(zs)
+for _ in 1:100
+    d = real.(ifft( fft(res) .* fft(ns)))
+    d[abs.(d) .< 10^-12] .= 10^-12
+    res .*= real.(ifft( fft(zs ./ d) .* fft(ins)))
+end
+resI[:,j2:end] .= res[:,j2:end]
+
+
+heatmap(den.x,den.y,resI')
+
+
+
+## test better kde
+dA = kde((bB[1,:],bB[2,:]), boundary = ((-5,-1),(-0.2,1.7)),npoints=(256,256))
+dA2 = kde((bB[1,:],bB[2,:]),bandwidth = (0.1,0.03),boundary = ((-5,-1),(-0.2,1.7)),npoints=(256,256))
+
+mask = bB[2,:] .<= 0.05
+lm = count(mask)
+dB = kde((bB[1,mask],bB[2,mask]),bandwidth = (0.1,0.01),boundary = ((-5,-1),(-0.2,1.7)),npoints=(256,256))
+dC = kde((bB[1,.!mask],bB[2,.!mask]),boundary = ((-5,-1),(-0.2,1.7)),npoints=(256,256))
+dF = @. dB.density * lm/n + dC.density * (1-lm/n)
+heatmap(dA.x,dA.y,dA2.density',
+    ylim = (-0.15,1.5)
+)
+
+heatmap(dB.x,dB.y,dF',
+    ylim = (-0.15,1.5)
+)
+
+denMarg = vec(sum(dA2.density,dims=1))
+denMarg .*= 1/(sum(denMarg)*step(dA2.y))
+
+j = findlast(den.y .<=0)
+sum(denMarg2[1:j])*step(den.y)
+
+count(bB[2,:] .<= 0)/n
+
+mask = bB[2,:] .< 0.2
+
+denS = kde((bB[1,mask],bB[2,mask]))
+
+heatmap(den.x,den.y,den.density')
+heatmap!(denS.x,denS.y,denS.density')
