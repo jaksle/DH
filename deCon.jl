@@ -175,7 +175,7 @@ as = LinRange(-0.1,1.7,500)
 
 den = kde((bB[1,:],bB[2,:]))
 
-p1 = heatmap(den.x,den.y,den.density',
+p1 = Plots.heatmap(den.x,den.y,den.density',
     fontfamily = "Computer Modern",
     #title = "Kernel density estimate",
     title = "original",
@@ -187,7 +187,7 @@ p1 = heatmap(den.x,den.y,den.density',
     yticks = [-0.1,0,0.2,0.4,0.6,0.8,1,1.2,1.4],
     colorbar = :none,
 )
-hline!(p1,[0],linestyle=:dash,color=:white,
+Plots.hline!(p1,[0],linestyle=:dash,color=:white,
     label = "",
 )
 savefig("kde.pdf")
@@ -215,7 +215,7 @@ end
 
 #heatmap(den.x,den.y,den.density')
 
-p2 = heatmap(den.x,den.y,res',
+p2 = Plots.heatmap(den.x,den.y,res',
     fontfamily = "Computer Modern",
     #title = "Deconvolved density estimate",
     title = "deconvolved",
@@ -230,7 +230,7 @@ p2 = heatmap(den.x,den.y,res',
     colorbar = :none,
     #colorbar_ticks = 0:0.2:1.6,
 )
-hline!([0],linestyle=:dash,color=:white,
+Plots.hline!([0],linestyle=:dash,color=:white,
     label = "",
 )
 
@@ -254,7 +254,7 @@ denMarg2 .*= 1/(sum(denMarg2)*step(den.y))
 
 
 
-p3 = plot(den.y,denMarg,
+p3 = Plots.plot(den.y,denMarg,
     fontfamily = "Computer Modern",
     label = "original density",
     ylabel = L"density $p{}_\alpha$",
@@ -266,13 +266,13 @@ p3 = plot(den.y,denMarg,
     linewidth = 1.5,
     xticks = [-0.1,0,0.2,0.4,0.6,0.8,1,1.2,1.4],
 )
-plot!(den.y,denMarg2,
+Plots.plot!(den.y,denMarg2,
     label = "deconvolved density",
     permute = (:x,:y),
     linewidth = 1.5,
     linecolor = palette(:viridis)[150],
 )
-hline!([0],linestyle=:dash,color=:black,alpha= 0.5,
+Plots.hline!([0],linestyle=:dash,color=:black,alpha= 0.5,
     label = "",
 )
 
@@ -282,34 +282,69 @@ l = @layout [a{0.4w} b{0.4w} c{0.2w}]
 #plot!(p1,legend=(0.5,0.3))
 #plot!(p2,legend=(0.5,0.3))
 #plot!(p3,legend=(0.5,0.3))
-plot(p1,p2,p3,layout = l)
+Plots.plot(p1,p2,p3,layout = l)
 
 savefig("kdeComp.pdf")
-# histogram - nie działa
-histogram2d(bB[1,:],bB[2,:],bins=(50,50),normalize=:pdf)
-
-nb = 50
-lds = LinRange(-5,-0.5,nb+1)
-As = LinRange(-0.1,1.7,nb+1)
-
-hist = [count((lds[i] .< B[1,:] .< lds[i+1]) .& (As[j] .< B[2,:] .< As[j+1])) for i in 1:nb, j in 1:nb]
-
-heatmap(hist')
-
-ns2 = [pdf(g,[x+step(lds)/2,y+step(As)/2]) for x in lds[1:end-1], y in As[1:end-1]]
-ns2 = circshift(ns2,(nb÷2,nb÷2))
-
-zs = Float64.(hist)
-ins = reverse(ns2)
-res = copy(zs)
-
-for _ in 1:20
-    d = real.(ifft( fft(res) .* fft(ns2)))
-    d[abs.(d) .< 10^-12] .= 10^-12
-    res .*= real.(ifft( fft(zs ./ d) .* fft(ins)))
-end
 
 
 ##################################
 
+## interpolation
+using KernelDensity,FFTW
 
+den = kde((bB[1,:],bB[2,:]))
+
+Makie.heatmap(den.x,den.y,den.density)
+
+# test run
+mA = 0.15 #mean(bB[2,:])
+K = (s,t) -> 1*(t^(mA)+s^(mA)-abs(s-t)^(mA))
+Σ = [2theorCovEff(i,i2,ln,K)/(2K(ts[i],ts[i])*2K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1]
+eM = (Ts'*Σ^-1*Ts)^-1
+nn= MvNormal([den.x[end÷2], den.y[end÷2]], Symmetric(eM))
+
+ns = [pdf(nn,[x,y]) for x in den.x, y in den.y]
+ns = circshift(ns,(length(den.x)÷2,length(den.y)÷2))
+#heatmap(den.x,den.y,ns')
+
+#dec = deconv(den.density,ns,-1)
+zs = den.density
+ins = reverse(ns)
+res = copy(zs)
+for _ in 1:100
+    d = real.(ifft( fft(res) .* fft(ns)))
+    d[abs.(d) .< 10^-12] .= 10^-12
+    res .*= real.(ifft( fft(zs ./ d) .* fft(ins)))
+end
+
+Makie.heatmap(den.x,den.y,res)
+
+
+resI = copy(res)
+j = findfirst(den.y .> 0.15)
+
+@showprogress for k in j:256
+    mA = den.y[k] 
+    K = (s,t) -> 1*(t^(mA)+s^(mA)-abs(s-t)^(mA))
+    Σ = [2theorCovEff(i,i2,ln,K)/(2K(ts[i],ts[i])*2K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1]
+    eM = (Ts'*Σ^-1*Ts)^-1
+    nn= MvNormal([den.x[end÷2], den.y[end÷2]], Symmetric(eM))
+
+    ns = [pdf(nn,[x,y]) for x in den.x, y in den.y]
+    ns = circshift(ns,(length(den.x)÷2,length(den.y)÷2))
+    #heatmap(den.x,den.y,ns')
+
+    #dec = deconv(den.density,ns,-1)
+    zs = den.density
+    ins = reverse(ns)
+    res = copy(zs)
+    for _ in 1:100
+        d = real.(ifft( fft(res) .* fft(ns)))
+        d[abs.(d) .< 10^-12] .= 10^-12
+        res .*= real.(ifft( fft(zs ./ d) .* fft(ins)))
+    end
+    resI[:,k] .= res[:,k]
+end
+
+
+Makie.heatmap(den.x,den.y,resI)

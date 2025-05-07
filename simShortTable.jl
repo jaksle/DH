@@ -65,13 +65,15 @@ end
 
 
 ##
-
+n = 10^5
 l = 5
 data = data5 
+ols = Array{Float64}(undef,2,n,length(simH))
+gls = similar(ols)
 
 @showprogress for k in eachindex(simH)
     H0, D0 = simH[k], 1.
-    n = 10^6
+    #n = 10^6
     ln = 10
     dt =  0.0567
     ts = dt*(1:ln)
@@ -111,7 +113,8 @@ data = data5
         eB[:,i] .= gR*(lmsd[:,i] .- biasEx[:,j])
     end
     eB[1,:] .-= log10(4)
-
+    ols[:,:,k] .= B
+    gls[:,:,k] .= eB
     data.OLS_bias[k] = mean(B[1,:]),  mean(B[2,:]) - 2H0
     data.OLS_var[k] = var(B[1,:]),  var(B[2,:])
     data.GLS_bias[k] = mean(eB[1,:]),  mean(eB[2,:]) - 2H0
@@ -142,3 +145,107 @@ for row in  1:12
 
     r.(R)' |> display
 end
+
+
+
+## violin plots
+
+using CairoMakie
+
+
+fig = Figure()
+ax = Axis(fig[1,1],
+    ylabel = L"estimated $\alpha$",
+    xlabel = L"sample $\alpha$",
+    xticks = (1:1:12, string.(2simH[1:1:12])),
+    limits= (0,13,-1,2.5),
+)
+for k in 1:1:12
+    Makie.violin!(ax,k*ones(n),ols[2,:,k],side=:left,
+        color = :dodgerblue2,
+        show_median = true
+    )
+    # CairoMakie.lines!(ax, [k-1/2,k], fill(mean(ols[2,:,k]),2),
+    #     #marker='⨉',
+    #     color=:blue,
+    #     #markersize = 10,
+    # )
+    Makie.violin!(ax,k*ones(n),gls[2,:,k],side=:right,
+        color = :tomato,
+        show_median = true
+    )
+    # CairoMakie.lines!(ax, [k,k+1/2], fill(mean(gls[2,:,k]),2),
+    #     #marker='⨉',
+    #     color=:red,
+    #     #markersize = 10,
+    # )
+end
+CairoMakie.scatter!(ax, 1:1:12, 2simH[1:1:12],
+    marker='⨉',
+    color=:black,
+    markersize = 10,
+)
+
+fig
+save("violinA.png",fig)
+
+
+
+
+fig = Figure()
+ax = Axis(fig[1,1],
+    ylabel = L"estimated $D$",
+    xlabel = L"sample $\alpha$",
+    xticks = (1:1:12, string.(2simH[1:1:12])),
+    limits= (0,13,-2,2),
+)
+for k in 1:1:12
+    Makie.violin!(ax,k*ones(n),ols[1,:,k],side=:left,
+        color = :dodgerblue2,
+        show_median = true
+    )
+    # CairoMakie.lines!(ax, [k-1/2,k], fill(mean(ols[2,:,k]),2),
+    #     #marker='⨉',
+    #     color=:blue,
+    #     #markersize = 10,
+    # )
+    Makie.violin!(ax,k*ones(n),gls[1,:,k],side=:right,
+        color = :tomato,
+        show_median = true
+    )
+    # CairoMakie.lines!(ax, [k,k+1/2], fill(mean(gls[2,:,k]),2),
+    #     #marker='⨉',
+    #     color=:red,
+    #     #markersize = 10,
+    # )
+end
+# CairoMakie.scatter!(ax, 1:1:12, 2simH[1:1:12],
+#     marker='⨉',
+#     color=:black,
+#     markersize = 10,
+# )
+
+fig
+save("violinD.png",fig)
+
+
+
+## box plot
+
+fig = Figure()
+ax = Axis(fig[1,1],
+    ylabel = L"estimated $\alpha$",
+    xlabel = L"sample $\alpha$",
+    limits= (0,13,-1,3),
+)
+for k in 1:2:12
+    Makie.boxplot!(ax,k*ones(n),ols[2,:,k],
+        color = :dodgerblue2,
+    )
+    Makie.boxplot!(ax,k*ones(n) .+ 1,gls[2,:,k],
+    color = :tomato
+    )
+end
+
+
+fig

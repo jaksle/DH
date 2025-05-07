@@ -66,7 +66,7 @@ end
 #plot(0.5 .- bias1)
 #plot!(0.5 .- bias2)
 
-## plots
+## old plots
 
 p = plot(layout = (2,1))
 scatter!(p[1],lns, vlD,
