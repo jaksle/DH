@@ -1,5 +1,5 @@
 
-using Plots, ProgressMeter, LaTeXStrings
+using Makie, ProgressMeter, LaTeXStrings
 using Statistics, Distributions, LinearAlgebra
 
 include("funs.jl")
@@ -65,15 +65,15 @@ end
 
 
 ##
-n = 10^5
+
+n = 10^6
 l = 5
-data = data5 
+data = data2 
 ols = Array{Float64}(undef,2,n,length(simH))
 gls = similar(ols)
 
 @showprogress for k in eachindex(simH)
     H0, D0 = simH[k], 1.
-    #n = 10^6
     ln = 10
     dt =  0.0567
     ts = dt*(1:ln)
@@ -124,6 +124,8 @@ gls = similar(ols)
     data.GLS_vgain[k] = 100 .* (1 .- data.GLS_var[k] ./ data.OLS_var[k])
 end
 
+#ols2 = copy(ols)
+#gls2 = copy(gls)
 
 ## round
 
@@ -152,18 +154,20 @@ end
 
 using CairoMakie
 
-
-fig = Figure()
+with_theme(theme_latexfonts()) do
+fig = Figure(size = (1200,400))
 ax = Axis(fig[1,1],
     ylabel = L"estimated $\alpha$",
     xlabel = L"sample $\alpha$",
     xticks = (1:1:12, string.(2simH[1:1:12])),
-    limits= (0,13,-1,2.5),
+    limits= (0,13,-0.5,2.0),
+        title = "Estimated anomalous exponent"
 )
 for k in 1:1:12
     Makie.violin!(ax,k*ones(n),ols[2,:,k],side=:left,
         color = :dodgerblue2,
-        show_median = true
+        show_median = true,
+        medianlinewidth = 0.5,
     )
     # CairoMakie.lines!(ax, [k-1/2,k], fill(mean(ols[2,:,k]),2),
     #     #marker='⨉',
@@ -172,6 +176,7 @@ for k in 1:1:12
     # )
     Makie.violin!(ax,k*ones(n),gls[2,:,k],side=:right,
         color = :tomato,
+        medianlinewidth = 0.5,
         show_median = true
     )
     # CairoMakie.lines!(ax, [k,k+1/2], fill(mean(gls[2,:,k]),2),
@@ -180,29 +185,34 @@ for k in 1:1:12
     #     #markersize = 10,
     # )
 end
-CairoMakie.scatter!(ax, 1:1:12, 2simH[1:1:12],
+exact = CairoMakie.scatter!(ax, 1:1:12, 2simH[1:1:12],
     marker='⨉',
     color=:black,
     markersize = 10,
 )
 
-fig
-save("violinA.png",fig)
+#fig
+axislegend(ax,[PolyElement(color = :dodgerblue2,strokewidth=0), PolyElement(color = :tomato,strokewidth=0),exact, LineElement(color=:black,linewidth=0.5)],
+    ["OLS", "GLS", "exact value","median"],
+    position = :rb
+)
 
+ylab = [L"10^{%$i}" for i in -1.5:0.5:1.5]
+ylab[4] = "1"
 
-
-
-fig = Figure()
-ax = Axis(fig[1,1],
+ax = Axis(fig[1,2],
     ylabel = L"estimated $D$",
     xlabel = L"sample $\alpha$",
+    yticks  = (-1.5:0.5:1.5, ylab ),
     xticks = (1:1:12, string.(2simH[1:1:12])),
-    limits= (0,13,-2,2),
+    limits= (0,13,-1.5,1.5),
+    title = "Estimated diffusivity"
 )
 for k in 1:1:12
     Makie.violin!(ax,k*ones(n),ols[1,:,k],side=:left,
         color = :dodgerblue2,
-        show_median = true
+        show_median = true,
+        medianlinewidth = 0.5,
     )
     # CairoMakie.lines!(ax, [k-1/2,k], fill(mean(ols[2,:,k]),2),
     #     #marker='⨉',
@@ -211,7 +221,8 @@ for k in 1:1:12
     # )
     Makie.violin!(ax,k*ones(n),gls[1,:,k],side=:right,
         color = :tomato,
-        show_median = true
+        show_median = true,
+        medianlinewidth = 0.5,
     )
     # CairoMakie.lines!(ax, [k,k+1/2], fill(mean(gls[2,:,k]),2),
     #     #marker='⨉',
@@ -219,15 +230,16 @@ for k in 1:1:12
     #     #markersize = 10,
     # )
 end
-# CairoMakie.scatter!(ax, 1:1:12, 2simH[1:1:12],
-#     marker='⨉',
-#     color=:black,
-#     markersize = 10,
-# )
+CairoMakie.scatter!(ax, 1:1:12, zeros(12),
+    marker='⨉',
+    color=:black,
+    markersize = 10,
+)
 
 fig
-save("violinD.png",fig)
-
+save("violin.pdf",fig)
+fig
+end
 
 
 ## box plot
@@ -248,4 +260,3 @@ for k in 1:2:12
 end
 
 
-fig

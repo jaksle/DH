@@ -1,19 +1,51 @@
 
-using Makie, ProgressMeter, LaTeXStrings
+using CairoMakie, ProgressMeter, LaTeXStrings
 using Statistics, Distributions, LinearAlgebra
 
 include("funs.jl")
 
 
+## noise cov
+
+function noiseC(n,k,l)
+    if k > l
+        l, k = k, l
+    end
+    if k == l 
+        return 4/(n-k)^2 * ( (n >= 2k) ? (3n-4k) : (2n-2k) )
+    else
+        return 4/((n-k)*(n-l)) * ( (n >= k+l) ? ( 2n-k-2l) : (n-l) )
+    end
+end
+
+
+ln = 6
+n = 10^6
+X = randn(ln,n)
+
+thC = noiseC.(ln,1:ln-1,(1:ln-1)')
+
+msd = Matrix{Float64}(undef,ln-1,n)
+for i in 1:n
+    msd[:,i] .= estMSD(X[:,i],ln-1)
+end
+
+cov(msd')
+
+
+lmsd = log.(msd)
+
+nC = [ thC[i,j]/()]
 ##
 
-H0, D0 = 0.35, 1.
-σ = 5
+H0, D0 = 0.35, 10.
+σ = 2
 n = 10^5
 ln = 100
 dt =  1
 ts = dt*(1:ln)
 lts = log10.(ts[1:ln-1])
+lts2 = log10.(ts[2:ln])
 Ts = [ones(ln-1) lts]
 
 K = (s,t) -> D0*(t^(2H0)+s^(2H0)-abs(s-t)^(2H0)) 
@@ -22,13 +54,51 @@ A = cholesky(Symmetric(S)).U
 ξ = randn(length(ts), n)
 X = A'*ξ .+ σ .* randn(ln,n) # 1D
 
-## test of err cov
+msd = Matrix{Float64}(undef,ln-1,n)
+for i in 1:n
+    msd[:,i] .= estMSD(X[:,i],ln-1)
+end
+msd .-= 2σ^2
 
-f = (s,t) -> 1*(t^(2H0)+s^(2H0)-abs(s-t)^(2H0)) + ( (s==t) ? 2σ^2 : 0. )
+l(x) = (x> 0) ? log10(x) : 0.
+lmsd = l.(msd)
+
+p =plot(ts[1:end-1],mean(msd,dims=2)[:])
+lines!(ts[1:end-1],K.(ts[1:end-1],ts[1:end-1]), color=:red)
+p
+
+p =plot(lts,mean(lmsd,dims=2)[:])
+lines!(lts,2H0 .* lts .+ log10(2D0), color=:red)
+p
+
+p =plot(lts,mean(lmsd,dims=2)[:] .+ log(10) .*diag(eMErr)/2' )
+lines!(lts,2H0 .* lts .+ log10(2D0), color=:red)
+p
+## test of err cov, brute force
+
+f = (s,t) -> D0*(t^(2H0)+s^(2H0)-abs(s-t)^(2H0)) + ( (s==t) ? σ^2 : 0. )
 eM = [theorCovEff(i,j,ln,f) for i in 1:ln-1, j in 1:ln-1]
 
-eMErr = @. 1/(log(10)^2) * ( eM  )
+eMErr =  1/(log(10)^2) * [ (eM[k,l])/((2D0*ts[k]^(2H0))*(2D0*ts[l]^(2H0))) for k in 1:ln-1, l in 1:ln-1]
 
+cov(lmsd')
+cov((lmsd .+ log(10) .*diag(eMErr)/2)')
+## test of err cov, equation
+
+f = (s,t) -> 1*(t^(2H0)+s^(2H0)-abs(s-t)^(2H0))
+e1 = [theorCovEff(i,j,ln,f) for i in 1:ln-1, j in 1:ln-1]
+
+thC = noiseC.(ln,1:ln-1,(1:ln-1)')
+
+
+
+
+crossTh = [4/((ln-k)*(ln-l1))*sum(incrCov(i,j,k,l1,f)*(==(i,j) + ==(i+k,j+l1) - ==(i,j+l1) - ==(i+k,j)) for i in 1:(ln-k), j in 1:(ln-l1)) for k in 1:ln-1,l1 in 1:ln-1]
+
+eMTh = D0^2*e1 .+ σ^2*D0*crossTh .+ σ^4*thC
+
+
+eTh =  1/(log(10)^2) * [(D0^2*e1[k,l] + σ^4*thC[k,l])/((2D0*ts[k]^(2H0))*(2D0*ts[l]^(2H0))) for k in 1:ln-1, l in 1:ln-1]
 
 ## GLS prep
 
