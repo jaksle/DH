@@ -48,6 +48,19 @@ function theorCovEff(k,l,ln,K) # zakres h?
     return 2/((ln-k)*(ln-l)) *( sum(N1(h)*incrCov(1,h,k,l,K)^2 for h in 2:ln-l; init=0) + sum( N2(h)*incrCov(h,1,k,l,K)^2 for h in 1:ln-k ) )
 end
 
+function crossCovEff(k,l,ln,K)
+    if k > l
+        k, l = l, k
+    end
+    N1 = h-> ln-l-h+1
+    N2 = h-> 
+        if h <= l-k+1
+            ln-l
+        else
+            ln-k-h+1
+        end
+    return 4/((ln-k)*(ln-l)) *( sum(N1(h)*incrCov(1,h,k,l,K)*(==(1,h) + ==(1+k,h+l) - ==(1,h+l) - ==(1+k,h)) for h in 2:ln-l; init=0) + sum( N2(h)*incrCov(h,1,k,l,K)*(==(h,1) + ==(h+k,1+l) - ==(h,1+l) - ==(h+k,1)) for h in 1:ln-k ) )
+end
 
 
 errV(k,ln,K) = theorCov(k,k,ln,K)
