@@ -101,7 +101,7 @@ heatmap(ys)
 
 ## plots
 
-p1 = heatmap(xs,xs,zs,
+p1 = Plots.heatmap(xs,xs,zs,
     fontfamily = "Computer Modern",
     axisratio = 1,
     xlim= (-2,5),
@@ -180,6 +180,9 @@ p1 = Plots.heatmap(den.x,den.y,den.density',
     #title = "Kernel density estimate",
     title = "original",
     xlabel = L"D\ [\mu m^2/s^{\alpha}]",
+    titlefont= 12,
+    xguidefontsize = 10,
+    yguidefontsize = 10,
     ylabel = L"α\ [1]",
     xticks = (-5:2:-1, [L"10^{%$s}" for s in -5:2:-1]),
     xlim = (-5,-1),
@@ -221,6 +224,9 @@ p2 = Plots.heatmap(den.x,den.y,res',
     title = "deconvolved",
     xlabel = L"D\ [\mu m^2/s^{\alpha}]",
     #ylabel = L"α\ [1]",
+    titlefont= 12,
+    xguidefontsize = 10,
+    yguidefontsize = 10,
     color = palette(:viridis),
     xticks = (-5:2:-1, [L"10^{%$s}" for s in -5:2:-1]),
     xlim = (-5,-1),
@@ -241,9 +247,9 @@ Plots.hline!([0],linestyle=:dash,color=:white,
 
 
 
-plotly()
-surface(den.x,den.y,den.density')
-surface(den.x,den.y,res')
+#plotly()
+#surface(den.x,den.y,den.density')
+#surface(den.x,den.y,res')
 
 ## porównanie gęstości brzegowych
 res ./= (sum(res)*step(den.x)*step(den.y))
@@ -261,6 +267,9 @@ p3 = Plots.plot(den.y,denMarg,
     ylabel = L"density $p{}_\alpha$",
     linecolor = palette(:plasma)[100],
     #xlabel = "α",
+    titlefont= 12,
+    xguidefontsize = 10,
+    yguidefontsize = 10,
     permute = (:x,:y),
     xlim = (-0.1,1.4),
     ylim = (0,3.1),
@@ -283,7 +292,12 @@ l = @layout [a{0.4w} b{0.4w} c{0.2w}]
 #plot!(p1,legend=(0.5,0.3))
 #plot!(p2,legend=(0.5,0.3))
 #plot!(p3,legend=(0.5,0.3))
-Plots.plot(p1,p2,p3,layout = l)
+Plots.plot(p1,p2,p3,layout = l,
+    titlefont= 12,
+    xguidefontsize = 10,
+    yguidefontsize = 10,
+    size = (800,400),
+)
 
 savefig("kdeComp.pdf")
 

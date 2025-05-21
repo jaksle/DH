@@ -253,6 +253,8 @@ end
 
 
 ## second row, load lenCmp
+using CairoMakie
+
 with_theme(theme_latexfonts()) do
     fig = Figure(size = (1200,400))
     darkRed = colorant"#cc3434"
@@ -283,7 +285,7 @@ with_theme(theme_latexfonts()) do
         titlesize = 20, 
         ylabel = L"$\langle\hat{\alpha}\rangle - \alpha$",
         xlabelsize = 20,
-        xlabel = "length of TA-MSD used",
+        xlabel = L"length $m$ of TA-MSD used ",
         ylabelsize = 20,
         xticks = vcat(2,5,vec(10:10:50)),
         #yticks = 0.00:0.005:0.045,
@@ -328,7 +330,7 @@ with_theme(theme_latexfonts()) do
         titlesize = 20, 
         ylabel = L"$\langle\log_{10}\,\hat{D}\rangle - \log_{10}\,D$",
         xlabelsize = 20,
-        xlabel = "length of TA-MSD used",
+        xlabel = L"length $m$ of TA-MSD used ",
         ylabelsize = 20,
         xticks = vcat(2,5,vec(10:10:50)),
         #yticks = 0.01:0.005:0.045,

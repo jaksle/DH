@@ -126,20 +126,20 @@ Plots.plot!(Shape([10,0,0,10],[550,550,0,0]),
     label = "window used for OLS1",
 )
 Plots.plot!(Shape([20,10,10,20],[550,550,0,0]),
-    color = palette(:default)[3],
+    color = :limegreen, #palette(:default)[3],
     alpha = 0.3,
     linewidth = 0,
     label = "window used for OLS2",
 )
 Plots.plot!(Shape([51,10,10,51],[60,60,0,0]),
-    color = palette(:default)[2],
+    color = :tomato,#palette(:default)[2],
     alpha = 0.5,
     fillstyle = :/,
     linewidth = 0,
     label = "window used for GLS",
 )
 Plots.plot!(ts[1:2:end], msd[1:2:end,k],
-    color = :grey,
+    color = :silver,
     ribbon = sqrt.(errVar[1:2:end]),
     linewidth = 0,
     label = "",
@@ -160,53 +160,55 @@ Plots.plot!(t->B1[2,k]*t+B1[1,k],ts[1],ts[end],
     label = "OLS1 fit"
 )
 Plots.plot!(t->B2[2,k]*t+B2[1,k],ts[1],maximum(ts),
-    color = palette(:default)[3],
+    color = :limegreen, #palette(:default)[3],
     linestyle = :dash,
     linewidth = 2.5,
     label = "OLS2 fit"
 )
 Plots.plot!(t->gB2[2,k]*t+gB2[1,k],ts[1],maximum(ts),
-    color = palette(:default)[2],
+    color = :tomato,
     linestyle = :dash,
     linewidth = 2.5,
     label = "GLS fit"
 )
 
-savefig("intervalAnTraj.eps")
+savefig("intervalAnTraj.svg")
 
 ## scatter plot
 
 p = Plots.plot(layout=(2,1))
 Plots.scatter!(p[1],B2[1,:],B2[2,:] .-1/2,
     fontfamily = "Computer Modern",
-    ylabel = L"\hat D\ [L^2/T]",
-    xlabel = L"\hat  σ\ [L^2]",
+    ylabel = L"D\ [L^2/T]",
+    xlabel = L"σ\ [L^2]",
     markerstrokewidth=0,
     markersize=2.0,
     alpha = 0.3,
     color = palette(:default)[3],
     label = "",
     xlim = (-20,20),
-    ylim = (-1,3)
+    ylim = (-1,3),
+    yticks = (-1:1:3,[L"10^{%$i}" for i in -1:1:3]),
 )
 Plots.scatter!(p[2],[],[],
     markerstrokewidth=0,
     markersize=2.0,
     alpha = 0.3,
-    color = palette(:default)[3],
+    color = :limegreen, #palette(:default)[3],
     label = "OLS2",
 )
 Plots.scatter!(p[2],gB2[1,:],gB2[2,:] .-1/2,
     fontfamily = "Computer Modern",
-    ylabel = L"\hat D\ [L^2/T]",
-    xlabel = L"\hat σ\ [L^2]",
+    ylabel = L"D\ [L^2/T]",
+    xlabel = L"σ\ [L^2]",
     markerstrokewidth=0,
     markersize=2.0,
     alpha = 0.3,
-    color = palette(:default)[2],
+    color = :tomato,
     label = "GLS",
     xlim = (-20,20),
-    ylim = (-1,3)
+    ylim = (-1,3),
+    yticks = (-1:1:3,[L"10^{%$i}" for i in -1:1:3]),
 )
 
 f(t) = cos(t)*sqrt(5.99) # 95% elipse
@@ -230,4 +232,4 @@ Plots.plot!(p[2],t->C[1,1]*f(t)+C[1,2]*g1(t),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 1/2,0,
 Plots.scatter!(p[1], [0],[1/2],marker=:x,color=:black, label = "")
 Plots.scatter!(p[2], [0],[1/2],marker=:x,color=:black, label = L"exact $(\sigma, D)$")
 
-savefig("intervalAnScatt.pdf")
+savefig("intervalAnScatt.svg")
