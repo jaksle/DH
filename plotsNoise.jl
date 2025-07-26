@@ -5,16 +5,7 @@ using Statistics, Distributions, LinearAlgebra
 include("funs.jl")
 
 
-function noiseC(n,k,l)
-    if k > l
-        l, k = k, l
-    end
-    if k == l 
-        return 4/(n-k)^2 * ( (n >= 2k) ? (3n-4k) : (2n-2k) )
-    else
-        return 4/((n-k)*(n-l)) * ( (n >= k+l) ? ( 2n-k-2l) : (n-l) )
-    end
-end
+
 
 
 ## noise cov test
@@ -38,7 +29,7 @@ lmsd = log.(msd)
 
 H0, D0 = 0.3, 10.
 σ = 1.5
-n = 10^5
+n = 10^6
 ln = 100
 dt =  1
 ts = dt*(1:ln)
@@ -58,8 +49,9 @@ for i in 1:n
 end
 msd .-= 2σ^2
 
-lg(x) = (x> 0) ? log10(x) : 0.
+lg(x) = (x > 0) ? log10(x) : 0.
 lmsd = lg.(msd)
+lmsd[isnan.(lmsd)] .= 0.
 
 p =plot(ts[1:end-1],mean(msd,dims=2)[:])
 lines!(ts[1:end-1],K.(ts[1:end-1],ts[1:end-1]), color=:red)
@@ -74,13 +66,20 @@ lines!(lts,2H0 .* lts .+ log10(2D0), color=:red)
 p
 ## test of err cov, brute force
 
-f = (s,t) -> D0*(t^(2H0)+s^(2H0)-abs(s-t)^(2H0)) + ( (s==t) ? σ^2 : 0. )
-eM = [theorCovEff(i,j,ln,f) for i in 1:ln-1, j in 1:ln-1]
+ffn = (s,t) -> D0*(t^(2H0)+s^(2H0)-abs(s-t)^(2H0)) + ( (s==t) ? σ^2 : 0. )
+eM = [theorCovEff(i,j,ln,ffn) for i in 1:ln-1, j in 1:ln-1]
 
 eMErr =  1/(log(10)^2) * [ (eM[k,l])/((2D0*ts[k]^(2H0))*(2D0*ts[l]^(2H0))) for k in 1:ln-1, l in 1:ln-1]
 
-cov(lmsd')
-cov((lmsd .+ log(10) .*diag(eMErr)/2)')
+
+
+cv = cov(msd')
+(cv .- eM) ./ cv
+
+lcv = cov(lmsd')
+(lcv .- eMErr) ./ lcv
+
+
 
 ## test of err cov, equation
 
@@ -96,13 +95,13 @@ for k in 1:ln-1, l1 in k:ln-1
     incrCov(i,j,k,l1,f)*(==(i,j) + ==(i+k,j+l1) - ==(i,j+l1) - ==(i+k,j)) for i in 1:(ln-k), j in 1:(ln-l1)) 
 end
 
-thC = noiseC.(ln,1:ln-1,(1:ln-1)')
+thC = noiseCov.(ln,1:ln-1,(1:ln-1)')
 
 e1 = [theorCovEff(i,j,ln,f) for i in 1:ln-1, j in 1:ln-1]
 
 crossTh3 = [crossCovEff(k,l,ln,f) for k in 1:ln-1,l in 1:ln-1]
 
-eMTh = D0^2*e1 .+ σ^2*D0*crossTh3 .+ σ^4*thC
+eMTh = D0^2*e1 .+ σ^2*D0*crossTh3 .+ σ^4*thC # zgadza się z eM i cov(msd')
 
 
 #eTh =  1/(log(10)^2) * [(D0^2*e1[k,l] + σ^4*thC[k,l])/((2D0*ts[k]^(2H0))*(2D0*ts[l]^(2H0))) for k in 1:ln-1, l in 1:ln-1]
@@ -239,7 +238,7 @@ dt =  1
 ts = dt*(1:ln)
 lts = log10.(ts[1:ln-1])
 Ts = [ones(ln-1) lts]
-lg(x) = (x> 0) ? log10(x) : 0.
+lg(x) = (x > 0) ? log10(x) : 0.
 
 errC = Matrix{Float64}(undef,ln-1,ln-1)
 msd = Matrix{Float64}(undef,ln-1,n)
@@ -310,7 +309,7 @@ end
 ##
 
 using JLD2
-
+@load "varComp.jld2" mB mbB vB vbB
 #@save "varComp.jld2" mB mbB vB vbB
 
 with_theme(theme_latexfonts()) do

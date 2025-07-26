@@ -1,4 +1,4 @@
-using Statistics, LinearAlgebra
+using Statistics, LinearAlgebra, ProgressMeter
 
 
 function tamsd(X::AbstractArray{dim,T}) where {T <: Real, dim}
@@ -10,67 +10,9 @@ function tamsd(X::AbstractArray{dim,T}) where {T <: Real, dim}
     return msd
 end
 
-function errCov_tamsd(ts::AbstractVector{T}, dim::Integer, α::Real,  logBase::Integer = 10) where T<:Real
-    K(s,t) = (α ≈ 1.0) ? min(s,t) : 0.5*(s^α + t^α + abs(s-t)^α)
-
-    function incrCov(ts,i,j,k,l,K) 
-        a, b, c, d = ts[i], ts[j], ts[k], ts[l]
-        K(a,b) + K(a+c,b+d) - K(a,b+d) - K(a+c,b)
-    end
-    
-    function theorCovEff(ts,k,l,ln,K)
-        if k > l
-            k, l = l, k
-        end
-        N1 = h-> ln-l-h+1
-        N2 = h-> 
-            if h <= l-k+1
-                ln-l
-            else
-                ln-k-h+1
-            end
-        return 2/((ln-k)*(ln-l)) *( sum(N1(h)*incrCov(ts,1,h,k,l,K)^2 for h in 2:ln-l; init=0) + sum( N2(h)*incrCov(ts,h,1,k,l,K)^2 for h in 1:ln-k ) )
-    end
-
-    ln = length(ts)
-    S = float(T)
-    errCov = Matrix{S}(undef, ln-1, ln-1)
-    logErrCov = Matrix{S}(undef, ln-1, ln-1)
-
-    for i in 1:ln-1, j in 1:ln-1
-        c = theorCovEff(ts,i,j,ln,K)
-        errCov[i,j] = dim*c
-        logErrCov[i,j] = c / ( dim * K(ts[i],ts[i]) * K(ts[j],ts[j]) * log(logBase)^2 ) 
-    end
-
-    return Symmetric(errCov), Symmetric(logErrCov)
-end
 
 
-
-
-
-
-"""
-Return TA-MSD fit.
-Input:
-- tamsd: ln-1×n  matrix containing the entire TA-MSDs of the n length ln sample trajectories
-- dim: original trajectory dimension (1,2 or 3)
-- Δt: sampling interval
-Optional:
-- precompute: if true first tabularise error covariance for XXX, if false calculate it for trajectories (could be computationally demanding) 
-"""
-function fit_tamsd(tamsd::AbstractMatrix, dim::Integer, Δt::Real;
-    precompute::Bool = true
-    )
-    ln, n = size(tamsd)[1]+1, size(tamsd)[2]
-
-    w = max(ln ÷ 10,5)
-    ols = fit_ols(tamsd, dim, Δt::Real, w)
-end
-
-
-function fit_ols(tamsd::AbstractMatrix, dim::Integer, Δt::Real, w::Integer)
+function fit_ols(tamsd::AbstractMatrix, dim::Integer, Δt::Real, w::Integer = max(5,size(tamsd)[1]÷10))
     Ts = [ones(w) log10.(Δt*(1:w))]
     estPar = (Ts'*Ts)^-1*Ts' * log10.(tamsd[1:w,:])
     estPar[1,:] .-= log10(2dim)
@@ -78,28 +20,35 @@ function fit_ols(tamsd::AbstractMatrix, dim::Integer, Δt::Real, w::Integer)
 end
 
 """
-Fitting TA-MSD with theGLS method.
+    fit_gls(tamsd::AbstractMatrix, dim::Integer, Δt::Real, init_α::AbstractVector; ...)
+    fit_gls(tamsd::AbstractMatrix, dim::Integer, Δt::Real, init_α::AbstractVector, init_D::AbstractVector, σ = 0.; ...)
+
+Fitting TA-MSD with the GLS method.
 Input:
 - tamsd: ln-1×n  matrix containing the entire TA-MSDs of the n length ln sample trajectories
 - dim: original trajectory dimension (1,2 or 3)
 - Δt: sampling interval
 - init_α: initial approximate values of anomalous exponent
-Optional:
-- precompute: if true first tabularise error covariances, if false calculate it for trajectories (could be computationally demanding) 
+Keyword input:
+- precompute: if true first tabularise error covariances, if false calculate it for trajectories (could be computationally demanding); default true 
 - precompute_αs = 0.1:0.02:1.6: points at which precompute
 Output:
 - gls: 2×n matrix values of (log10 D, α) estimates
 - errCov: 2×2×n matrix with estimated parameter error covariances 
+
+For estimation with experimental noise provide also:
+- init_D: initial approximate values of diffusivity
+- σ: noise amplitude, X_obs = X_true + σξ
 """
 function fit_gls(tamsd::AbstractMatrix, dim::Integer, Δt::Real, init_α::AbstractVector;
      precompute::Bool = true,
      precompute_αs::AbstractVector = 0.1:0.02:1.6
      )
-    ln, n = size(tamsd)[1]+1, size(tamsd)[2]
+    ln, n = size(tamsd)[1]+1, size(tamsd)[2] # ! ln is of orignal trajectory
     ts = Δt*(1:ln)
     Ts = [ones(ln-1) log10.(ts[1:ln-1])]
     gls = Matrix{Float64}(undef, 2, n)
-    errCov = Array{Float64}(undef, 2, 2, n)
+    fitCov = Array{Float64}(undef, 2, 2, n)
     lmsd = log10.(tamsd)
 
     if precompute
@@ -110,37 +59,182 @@ function fit_gls(tamsd::AbstractMatrix, dim::Integer, Δt::Real, init_α::Abstra
         bias = Array{Float64}(undef,ln-1,na)
 
         @showprogress for k in 1:na
-            c = errCov_tamsd(ts, dim, precompute_αs[k])[2]
+            c = errCov(ts, dim, precompute_αs[k])[2]
             errC[:,:,k] .= c
             bias[:,k] .=  -log(10) .* diag(c) ./2
             iC[:,:,k] = inv(c)
         end
 
         # estimate
-        for i in 1:n
-            j = argmin(abs.(αs .- init_α[i]))
-            gR = (Ts'*iC[:,:,j]*Ts)^-1*Ts'*iC[:,:,j]
-            gls[:,i] .= gR*(lmsd[:,i] .- bias[:,j])
+        @showprogress for i in 1:n
+            j0 = argmin(abs.(precompute_αs .- init_α[i]))
+            gR = (Ts'*iC[:,:,j0]*Ts)^-1*Ts'*iC[:,:,j0]
+            gls[:,i] .= gR*(lmsd[:,i] .- bias[:,j0])
 
-            j2 = argmin(abs.(αs .- gls[2,i]))
-            errCov[:,:,i] .= (Ts'*iC[:,:,j2]*Ts)^-1
+            j1 = argmin(abs.(precompute_αs .- gls[2,i]))
+            fitCov[:,:,i] .= (Ts'*iC[:,:,j1]*Ts)^-1
         end
     else
-        
         @showprogress for i in 1:n
-            errC = errCov_tamsd(ts, dim, init_α[i])[2]
+            errC = errCov(ts, dim, init_α[i])[2]
             bias = -log(10) .* diag(errC) ./2
             iC = inv(errC)
             gR = (Ts'*iC*Ts)^-1*Ts'*iC
             gls[:,i] .= gR*(lmsd[:,i] .- bias)
-
-            errC2 = errCov_tamsd(ts, dim, gls[2,i])[2]
-            errCov[:,:,i] .= (Ts'*inv(errC2)*Ts)^-1
+            errC2 = errCov(ts, dim, gls[2,i])[2]
+            fitCov[:,:,i] .= (Ts'*inv(errC2)*Ts)^-1
         end
     end
 
     gls[1,:] .-= log10(2dim)
-    return gls, errCov
+    return gls, fitCov
 end
+
+
+function fit_gls(tamsd::AbstractMatrix, dim::Integer, Δt::Real, init_α::AbstractVector, init_D::AbstractVector, σ::Real;
+     precompute::Bool = true,
+     precompute_αs::AbstractVector = 0.1:0.02:1.6
+     )
+    ln, n = size(tamsd)[1]+1, size(tamsd)[2]
+    ts = Δt*(1:ln)
+    Ts = [ones(ln-1) log10.(ts[1:ln-1])]
+    gls = Matrix{Float64}(undef, 2, n)
+    fitCov = Array{Float64}(undef, 2, 2, n)
+    lg(x) = x >= 0 ? log10(x) : NaN
+    lmsd = lg.(tamsd .- 2dim*σ^2)
+
+    noiseC = noiseCov.(ln, 1:ln-1, (1:ln-1)')
+
+    if precompute
+        # precompute covariances
+        na = length(precompute_αs)
+        orgC = Array{Float64}(undef, ln-1, ln-1, na) # pure FBM, no noise, no log scale
+        crossC = Array{Float64}(undef, ln-1, ln-1, na) # cross term in cov
+
+        @showprogress for k in 1:na
+            orgC[:,:,k] .= errCov(ts, dim, precompute_αs[k])[1]
+            crossC[:,:,k] .= crossCov(ts, dim, precompute_αs[k])
+        end
+
+        # estimate
+        @showprogress for i in 1:n
+            α0, D0 = init_α[i], init_D[i]
+            j0 = argmin(abs.(precompute_αs .- α0))
+            errC0 = @. 1/(log(10)^2) * (D0^2*orgC[:,:,j0] + σ^2*D0*crossC[:,:,j0] + σ^4*dim*noiseC)/((2D0*dim*ts[1:ln-1]^(α0)) *(2D0*dim*ts[1:ln-1]'^(α0)))
+            iC0 = inv(errC0)
+            bias = -log(10) .* diag(errC0) ./2
+            gR = (Ts'*iC0*Ts)^-1*Ts'*iC0
+            mask = .!isnan.(lmsd[:,i])
+            gls[:,i] .= gR[:,mask]*(lmsd[mask,i] .- bias[mask])
+            gls[1,i] -= log10(2dim)
+
+            α1, D1 = gls[2,i], 10^gls[1,i]
+            j1 = argmin(abs.(precompute_αs .- α1))
+            errC1 = @. 1/(log(10)^2) * (D1^2*orgC[:,:,j1] + σ^2*D1*crossC[:,:,j1] + σ^4*dim*noiseC)/((2D1*dim*ts[1:ln-1]^(α1))*(2D1*dim*ts[1:ln-1]'^(α1))) 
+            iC1 = inv(errC1)
+            fitCov[:,:,i] .= (Ts'*iC1*Ts)^-1
+        end
+    else
+        @showprogress for i in 1:n
+            α0, D0 = init_α[i], init_D[i]
+            orgC = errCov(ts, dim, α0)[1]
+            crossC = crossCov(ts, dim, α0)
+            errC0 = @. 1/(log(10)^2) * (D0^2*orgC + σ^2*D0*crossC + σ^4*dim*noiseC)/((2D0*dim*ts[1:ln-1]^(α0))*(2D0*dim*ts[1:ln-1]'^(α0)))
+            iC0 = inv(errC0)
+            bias = -log(10) .* diag(errC0) ./2
+            gR = (Ts'*iC0*Ts)^-1*Ts'*iC0
+            mask = .!isnan.(lmsd)
+            gls[:,i] .= gR[:,mask]*(lmsd[mask,i] .- bias[mask])
+            gls[1,i] -= log10(2dim)
+
+            α1, D1 = gls[2,i], 10^gls[1,i]
+            orgC = errCov(ts, dim, α1)[1]
+            crossC = crossCov(ts, dim, α1)
+            errC1 = @. 1/(log(10)^2) * (D1^2*orgC + σ^2*D1*crossC + σ^4*dim*noiseC)/((2D1*dim*ts[1:ln-1]^(α1))*(2D1*dim*ts[1:ln-1]'^(α1)))
+            fitCov[:,:,i] .= (Ts'*inv(errC1)*Ts)^-1
+        end
+    end
+
+    return gls, fitCov
+end
+
+
+## utility functions
+
+function incrCov(ts,i,j,k,l,K) 
+    a, b, c, d = ts[i], ts[j], ts[k], ts[l]
+    K(a,b) + K(a+c,b+d) - K(a,b+d) - K(a+c,b)
+end
+
+
+"""
+Covariance of errors of TA-MSD and log TA-MSD. Data is assumed to come from FBM.
+"""
+function errCov(ts::AbstractVector{T}, dim::Integer, α::Real,  logBase::Integer = 10) where T<:Real
+    K(s,t) = (α ≈ 1.0) ? 2min(s,t) : (s^α + t^α - abs(s-t)^α) # FBM cov
+    
+    function theorCovEff(ts,k,l,ln,K)
+        if k > l
+            k, l = l, k
+        end
+        N1 = h-> ln-l-h+1
+        N2 = h -> (h <= l-k+1) ? ( ln-l ) : ( ln-k-h+1 )
+
+        return 2/((ln-k)*(ln-l)) *( sum(N1(h)*incrCov(ts,1,h,k,l,K)^2 for h in 2:ln-l; init=0) + sum( N2(h)*incrCov(ts,h,1,k,l,K)^2 for h in 1:ln-k ) )
+    end
+
+    ln = length(ts)
+    S = float(T)
+    errCov = Matrix{S}(undef, ln-1, ln-1)
+    logErrCov = Matrix{S}(undef, ln-1, ln-1)
+
+    for i in 1:ln-1, j in i:ln-1
+        c = theorCovEff(ts,i,j,ln,K)
+        errCov[i,j] = dim*c
+        logErrCov[i,j] = c / ( dim * K(ts[i],ts[i]) * K(ts[j],ts[j]) * log(logBase)^2 ) 
+    end
+
+    return Symmetric(errCov), Symmetric(logErrCov)
+end
+
+function crossCov(ts::AbstractVector{T}, dim::Integer, α::Real) where T <: Real
+        K(s,t) = (α ≈ 1.0) ? 2min(s,t) : (s^α + t^α - abs(s-t)^α) # FBM cov
+
+        function crossCovEff(ts, k, l, ln, K)
+            if k > l
+                k, l = l, k
+            end
+            N1 = h -> ln-l-h+1
+            N2 = h -> (h <= l-k+1) ? ( ln-l ) : ( ln-k-h+1 )
+
+            return 4/((ln-k)*(ln-l)) *( sum(N1(h)*incrCov(ts,1,h,k,l,K)*(==(1,h) + ==(1+k,h+l) - ==(1,h+l) - ==(1+k,h)) for h in 2:ln-l; init=0) + sum( N2(h)*incrCov(ts,h,1,k,l,K)*(==(h,1) + ==(h+k,1+l) - ==(h,1+l) - ==(h+k,1)) for h in 1:ln-k ) )
+        end
+
+        ln = length(ts)
+        cov = Matrix{float(T)}(undef, ln-1, ln-1)
+        for i in 1:ln-1, j in i:ln-1
+            cov[i,j] = dim*crossCovEff(ts,i,j,ln,K)
+        end
+
+        return Symmetric(cov)
+end
+
+
+
+
+"""
+Covariance of 1D iid noise TA-MSD
+"""
+function noiseCov(ln,k,l)
+    if k > l
+        l, k = k, l
+    end
+    if k == l 
+        return 4/(ln-k)^2 * ( (ln >= 2k) ? (3ln-4k) : (2ln-2k) )
+    else
+        return 4/((ln-k)*(ln-l)) * ( (ln >= k+l) ? ( 2ln-k-2l) : (ln-l) )
+    end
+end
+
 
 
