@@ -128,7 +128,7 @@ bias = Array{Float64}(undef,ln-1,length(hs))
     end
 end
 
-thN = noiseC.(ln,1:ln-1,(1:ln-1)')
+thN = noiseCov.(ln,1:ln-1,(1:ln-1)')
 
 ## sim FBM
 
@@ -221,8 +221,9 @@ count(pB[2,:] .>= 1 )
 
 count(0 .< B[2,:] .< 2)
 count(0 .< bB[2,:] .< 2)
-## main sim loop
 
+###########################################
+## main sim loop
 
 vs = LinRange(0,50,100)
 mB = Matrix{Float64}(undef,2,100)
@@ -238,7 +239,7 @@ dt =  1
 ts = dt*(1:ln)
 lts = log10.(ts[1:ln-1])
 Ts = [ones(ln-1) lts]
-lg(x) = (x > 0) ? log10(x) : 0.
+lg(x) = (x > 0) ? log10(x) : NaN
 
 errC = Matrix{Float64}(undef,ln-1,ln-1)
 msd = Matrix{Float64}(undef,ln-1,n)
@@ -252,7 +253,7 @@ A = cholesky(Symmetric(S)).U
 ξ = randn(length(ts), n)
 orgX = A'*ξ
 
-for (iv,v) in enumerate(vs)
+for (iv,v) in zip(75:100, vs[75:100]) # enumerate(vs)
     σ = sqrt(v)
 
     X = orgX + σ .* randn(ln,n) # 1D
@@ -268,7 +269,14 @@ for (iv,v) in enumerate(vs)
 
     w = 10 # window
     for i in 1:n
-        B[:,i] .= (Ts[1:w,:]'*Ts[1:w,:])^-1*Ts[1:w,:]'*lmsd[1:w,i]
+        mask = falses(ln-1)
+        mask[1:w] .= .!isnan.(lmsd[1:w,i])
+        if count(mask) > 2 # pechowe trajektorie
+            B[:,i] .= (Ts[mask,:]'*Ts[mask,:])^-1*Ts[mask,:]'*lmsd[mask,i]
+        else
+            B[1,i] = log10(20)
+            B[2,i] = 0.7
+        end
     end
 
     B[1,:] .-= log10(2)
@@ -284,32 +292,45 @@ for (iv,v) in enumerate(vs)
             errC[k,l] = 1/(log(10)^2) * (D^2*errTh[k,l,j] + σ^2*D*crossTh[k,l,j] + σ^4*thN[k,l])/((2D*ts[k]^(B[2,i]))*(2D*ts[l]^(B[2,i])))
             errC[l,k] = errC[k,l]
         end
-        gR = (Ts'*errC^-1*Ts)^-1*Ts'*errC^-1
-        gB[:,i] .= gR*lmsd[:,i]
-        bB[:,i] .= gR*(lmsd[:,i] .+ log(10)*diag(errC) ./ 2)
+        
+        mask = .!isnan.(lmsd[:,i])
+        iC = inv(errC[mask,mask])
+        gR = (Ts[mask,:]'*iC*Ts[mask,:])^-1*Ts[mask,:]'*iC
+        gB[:,i] .= gR*lmsd[mask,i]
+        bB[:,i] .= gR*(lmsd[mask,i] .+ log(10)*diag(errC)[mask] ./ 2)
     end
 
     gB[1,:] .-= log10(2)
     bB[1,:] .-= log10(2)
 
-    m1 = 0 .< B[2,:] .< 2.
-    m2 = 0 .< bB[2,:] .< 2.
+    #m1 = 0 .< B[2,:] .< 2.
+    #m2 = 0 .< bB[2,:] .< 2.
 
-    mB[1,iv] = mean(B[1,m1])
-    mB[2,iv] = mean(B[2,m1])
-    mbB[1,iv] = mean(bB[1,m2])
-    mbB[2,iv] = mean(bB[2,m2])
+    # mB[1,iv] = mean(B[1,m1])
+    # mB[2,iv] = mean(B[2,m1])
+    # mbB[1,iv] = mean(bB[1,m2])
+    # mbB[2,iv] = mean(bB[2,m2])
 
-    vB[1,iv] = var(B[1,m1])
-    vB[2,iv] = var(B[2,m1])
-    vbB[1,iv] = var(bB[1,m2])
-    vbB[2,iv] = var(bB[2,m2])
+    # vB[1,iv] = var(B[1,m1])
+    # vB[2,iv] = var(B[2,m1])
+    # vbB[1,iv] = var(bB[1,m2])
+    # vbB[2,iv] = var(bB[2,m2])
+
+    mB[1,iv] = mean(B[1,:])
+    mB[2,iv] = mean(B[2,:])
+    mbB[1,iv] = mean(bB[1,:])
+    mbB[2,iv] = mean(bB[2,:])
+
+    vB[1,iv] = var(B[1,:])
+    vB[2,iv] = var(B[2,:])
+    vbB[1,iv] = var(bB[1,:])
+    vbB[2,iv] = var(bB[2,:])
 end
 
 ##
 
-using JLD2
-@load "varComp.jld2" mB mbB vB vbB
+#using JLD2
+#@load "varComp.jld2" mB mbB vB vbB
 #@save "varComp.jld2" mB mbB vB vbB
 
 with_theme(theme_latexfonts()) do
@@ -376,6 +397,6 @@ with_theme(theme_latexfonts()) do
     colgap!(fig.layout, 10)
     rowgap!(fig.layout, 10)
 
-    save("noise.pdf",fig)
+    #save("noise.pdf",fig)
     fig
 end

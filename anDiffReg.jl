@@ -121,11 +121,12 @@ function fit_gls(tamsd::AbstractMatrix, dim::Integer, Δt::Real, init_α::Abstra
             α0, D0 = init_α[i], init_D[i]
             j0 = argmin(abs.(precompute_αs .- α0))
             errC0 = @. 1/(log(10)^2) * (D0^2*orgC[:,:,j0] + σ^2*D0*crossC[:,:,j0] + σ^4*dim*noiseC)/((2D0*dim*ts[1:ln-1]^(α0)) *(2D0*dim*ts[1:ln-1]'^(α0)))
-            iC0 = inv(errC0)
-            bias = -log(10) .* diag(errC0) ./2
-            gR = (Ts'*iC0*Ts)^-1*Ts'*iC0
+            
             mask = .!isnan.(lmsd[:,i])
-            gls[:,i] .= gR[:,mask]*(lmsd[mask,i] .- bias[mask])
+            iC0 = inv(errC0[mask,mask])
+            bias = -log(10) .* diag(errC0) ./2
+            gR = (Ts[mask,:]'*iC0*Ts[mask,:])^-1*Ts[mask,:]'*iC0
+            gls[:,i] .= gR*(lmsd[mask,i] .- bias[mask])
             gls[1,i] -= log10(2dim)
 
             α1, D1 = gls[2,i], 10^gls[1,i]
@@ -140,11 +141,13 @@ function fit_gls(tamsd::AbstractMatrix, dim::Integer, Δt::Real, init_α::Abstra
             orgC = errCov(ts, dim, α0)[1]
             crossC = crossCov(ts, dim, α0)
             errC0 = @. 1/(log(10)^2) * (D0^2*orgC + σ^2*D0*crossC + σ^4*dim*noiseC)/((2D0*dim*ts[1:ln-1]^(α0))*(2D0*dim*ts[1:ln-1]'^(α0)))
-            iC0 = inv(errC0)
+            
             bias = -log(10) .* diag(errC0) ./2
-            gR = (Ts'*iC0*Ts)^-1*Ts'*iC0
+
             mask = .!isnan.(lmsd[:,i])
-            gls[:,i] .= gR[:,mask]*(lmsd[mask,i] .- bias[mask])
+            iC0 = inv(errC0[mask,mask])
+            gR = (Ts[mask,:]'*iC0*Ts[mask,:])^-1*Ts[mask,:]'*iC0[mask,mask]
+            gls[:,i] .= gR*(lmsd[mask,i] .- bias[mask])
             gls[1,i] -= log10(2dim)
 
             α1, D1 = gls[2,i], 10^gls[1,i]
