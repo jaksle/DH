@@ -1,15 +1,23 @@
 using Statistics, LinearAlgebra, ProgressMeter
 
 
-function tamsd(X::AbstractArray{dim,T}) where {T <: Real, dim}
-    ln, n =  size(X)
+function tamsd(X::AbstractArray{T,N}) where {T <: Real, N}
+    ln, n, w =  size(X)
     msd = Matrix{T}(undef, ln-1, n)
-    for i in 1:size(msd)[1]
-        msd[i,:] .=  mean(sum((X[k,:,:] .- X[k+i,:,:])^2, dim = 2) for k in 1:ln-i)
+    for j in 1:n, i in 1:ln-1
+        msd[i, j] = mean(sum((X[k,j,l] - X[k+i,j,l])^2 for l in 1:w) for k in 1:ln-i)
     end
     return msd
 end
 
+function tamsd(X::AbstractMatrix{T}) where {T <: Real}
+    ln, n =  size(X)
+    msd = Matrix{T}(undef, ln-1, n)
+    for j in 1:n, i in 1:ln-1
+        msd[i, j] = mean((X[k,j] - X[k+i,j])^2 for k in 1:ln-i)
+    end
+    return msd
+end
 
 
 function fit_ols(tamsd::AbstractMatrix, dim::Integer, Δt::Real, w::Integer = max(5,size(tamsd)[1]÷10))
