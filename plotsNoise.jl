@@ -253,7 +253,7 @@ A = cholesky(Symmetric(S)).U
 ξ = randn(length(ts), n)
 orgX = A'*ξ
 
-for (iv,v) in zip(75:100, vs[75:100]) # enumerate(vs)
+for (iv,v) in enumerate(vs)
     σ = sqrt(v)
 
     X = orgX + σ .* randn(ln,n) # 1D
@@ -303,28 +303,28 @@ for (iv,v) in zip(75:100, vs[75:100]) # enumerate(vs)
     gB[1,:] .-= log10(2)
     bB[1,:] .-= log10(2)
 
-    #m1 = 0 .< B[2,:] .< 2.
-    #m2 = 0 .< bB[2,:] .< 2.
+    m1 = 0 .< B[2,:] .< 2.
+    m2 = 0 .< bB[2,:] .< 2.
 
-    # mB[1,iv] = mean(B[1,m1])
-    # mB[2,iv] = mean(B[2,m1])
-    # mbB[1,iv] = mean(bB[1,m2])
-    # mbB[2,iv] = mean(bB[2,m2])
+    mB[1,iv] = mean(B[1,m1])
+    mB[2,iv] = mean(B[2,m1])
+    mbB[1,iv] = mean(bB[1,m2])
+    mbB[2,iv] = mean(bB[2,m2])
 
-    # vB[1,iv] = var(B[1,m1])
-    # vB[2,iv] = var(B[2,m1])
-    # vbB[1,iv] = var(bB[1,m2])
-    # vbB[2,iv] = var(bB[2,m2])
+    vB[1,iv] = var(B[1,m1])
+    vB[2,iv] = var(B[2,m1])
+    vbB[1,iv] = var(bB[1,m2])
+    vbB[2,iv] = var(bB[2,m2])
 
-    mB[1,iv] = mean(B[1,:])
-    mB[2,iv] = mean(B[2,:])
-    mbB[1,iv] = mean(bB[1,:])
-    mbB[2,iv] = mean(bB[2,:])
+    # mB[1,iv] = mean(B[1,:])
+    # mB[2,iv] = mean(B[2,:])
+    # mbB[1,iv] = mean(bB[1,:])
+    # mbB[2,iv] = mean(bB[2,:])
 
-    vB[1,iv] = var(B[1,:])
-    vB[2,iv] = var(B[2,:])
-    vbB[1,iv] = var(bB[1,:])
-    vbB[2,iv] = var(bB[2,:])
+    # vB[1,iv] = var(B[1,:])
+    # vB[2,iv] = var(B[2,:])
+    # vbB[1,iv] = var(bB[1,:])
+    # vbB[2,iv] = var(bB[2,:])
 end
 
 ##
