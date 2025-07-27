@@ -69,6 +69,7 @@ errC0 = @. 1/(log(10)^2) * (D0^2*orgC + σ^2*D0*crossC + σ^4*2*noiseC)/((2D0*2*
 
 gls1, c1 = fit_gls(msd, 2, dt, fill(α0,n))
 gls2, c2 = fit_gls(msd, 2, dt, fill(α0,n), fill(D0,n),σ)
+gls3, c3 = fit_gls(msd[:,1:500], 2, dt, fill(α0,n), fill(D0,n),σ, precompute = false)
 
 Ts = [ones(ln-1) log10.(ts[1:ln-1])]
 parErr = (Ts'*inv(errC0)*Ts)^-1

@@ -143,7 +143,7 @@ function fit_gls(tamsd::AbstractMatrix, dim::Integer, Δt::Real, init_α::Abstra
             iC0 = inv(errC0)
             bias = -log(10) .* diag(errC0) ./2
             gR = (Ts'*iC0*Ts)^-1*Ts'*iC0
-            mask = .!isnan.(lmsd)
+            mask = .!isnan.(lmsd[:,i])
             gls[:,i] .= gR[:,mask]*(lmsd[mask,i] .- bias[mask])
             gls[1,i] -= log10(2dim)
 
