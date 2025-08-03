@@ -269,7 +269,7 @@ for (k,l) in enumerate(lst)
         markerstrokewidth=0,
         markersize=3,
         xlim = (0,100),
-        framestyle = :origin,
+        framestyle = :zerolines,
     )
 end
 
