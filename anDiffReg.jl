@@ -38,7 +38,7 @@ Input:
 - Δt: sampling interval
 - init_α: initial approximate values of anomalous exponent
 Keyword input:
-- precompute: if true first tabularise error covariances, if false calculate it for trajectories (could be computationally demanding); default true 
+- precompute = true : if true first tabularise error covariances, if false calculate it for trajectories (could be computationally demanding)
 - precompute_αs = 0.1:0.02:1.6: points at which precompute
 Output:
 - gls: 2×n matrix values of (log10 D, α) estimates
@@ -50,7 +50,7 @@ For estimation with experimental noise provide also:
 """
 function fit_gls(tamsd::AbstractMatrix, dim::Integer, Δt::Real, init_α::AbstractVector;
      precompute::Bool = true,
-     precompute_αs::AbstractVector = 0.1:0.02:1.6
+     precompute_alphas::AbstractVector = 0.1:0.02:1.6
      )
     ln, n = size(tamsd)[1]+1, size(tamsd)[2] # ! ln is of orignal trajectory
     ts = Δt*(1:ln)
@@ -61,13 +61,13 @@ function fit_gls(tamsd::AbstractMatrix, dim::Integer, Δt::Real, init_α::Abstra
 
     if precompute
         # precompute covariances
-        na = length(precompute_αs)
+        na = length(precompute_alphas)
         errC = Array{Float64}(undef,ln-1,ln-1,na)
         iC = Array{Float64}(undef,ln-1,ln-1,na)
         bias = Array{Float64}(undef,ln-1,na)
 
         @showprogress for k in 1:na
-            c = errCov(ts, dim, precompute_αs[k])[2]
+            c = errCov(ts, dim, precompute_alphas[k])[2]
             errC[:,:,k] .= c
             bias[:,k] .=  -log(10) .* diag(c) ./2
             iC[:,:,k] = inv(c)
@@ -75,11 +75,11 @@ function fit_gls(tamsd::AbstractMatrix, dim::Integer, Δt::Real, init_α::Abstra
 
         # estimate
         @showprogress for i in 1:n
-            j0 = argmin(abs.(precompute_αs .- init_α[i]))
+            j0 = argmin(abs.(precompute_alphas .- init_α[i]))
             gR = (Ts'*iC[:,:,j0]*Ts)^-1*Ts'*iC[:,:,j0]
             gls[:,i] .= gR*(lmsd[:,i] .- bias[:,j0])
 
-            j1 = argmin(abs.(precompute_αs .- gls[2,i]))
+            j1 = argmin(abs.(precompute_alphas .- gls[2,i]))
             fitCov[:,:,i] .= (Ts'*iC[:,:,j1]*Ts)^-1
         end
     else
@@ -101,7 +101,7 @@ end
 
 function fit_gls(tamsd::AbstractMatrix, dim::Integer, Δt::Real, init_α::AbstractVector, init_D::AbstractVector, σ::Real;
      precompute::Bool = true,
-     precompute_αs::AbstractVector = 0.1:0.02:1.6
+     precompute_alphas::AbstractVector = 0.1:0.02:1.6
      )
     ln, n = size(tamsd)[1]+1, size(tamsd)[2]
     ts = Δt*(1:ln)
@@ -115,19 +115,19 @@ function fit_gls(tamsd::AbstractMatrix, dim::Integer, Δt::Real, init_α::Abstra
 
     if precompute
         # precompute covariances
-        na = length(precompute_αs)
+        na = length(precompute_alphas)
         orgC = Array{Float64}(undef, ln-1, ln-1, na) # pure FBM, no noise, no log scale
         crossC = Array{Float64}(undef, ln-1, ln-1, na) # cross term in cov
 
         @showprogress for k in 1:na
-            orgC[:,:,k] .= errCov(ts, dim, precompute_αs[k])[1]
-            crossC[:,:,k] .= crossCov(ts, dim, precompute_αs[k])
+            orgC[:,:,k] .= errCov(ts, dim, precompute_alphas[k])[1]
+            crossC[:,:,k] .= crossCov(ts, dim, precompute_alphas[k])
         end
 
         # estimate
         @showprogress for i in 1:n
             α0, D0 = init_α[i], init_D[i]
-            j0 = argmin(abs.(precompute_αs .- α0))
+            j0 = argmin(abs.(precompute_alphas .- α0))
             errC0 = @. 1/(log(10)^2) * (D0^2*orgC[:,:,j0] + σ^2*D0*crossC[:,:,j0] + σ^4*dim*noiseC)/((2D0*dim*ts[1:ln-1]^(α0)) *(2D0*dim*ts[1:ln-1]'^(α0)))
             
             mask = .!isnan.(lmsd[:,i])
@@ -138,7 +138,7 @@ function fit_gls(tamsd::AbstractMatrix, dim::Integer, Δt::Real, init_α::Abstra
             gls[1,i] -= log10(2dim)
 
             α1, D1 = gls[2,i], 10^gls[1,i]
-            j1 = argmin(abs.(precompute_αs .- α1))
+            j1 = argmin(abs.(precompute_alphas .- α1))
             errC1 = @. 1/(log(10)^2) * (D1^2*orgC[:,:,j1] + σ^2*D1*crossC[:,:,j1] + σ^4*dim*noiseC)/((2D1*dim*ts[1:ln-1]^(α1))*(2D1*dim*ts[1:ln-1]'^(α1))) 
             iC1 = inv(errC1)
             fitCov[:,:,i] .= (Ts'*iC1*Ts)^-1
@@ -154,7 +154,7 @@ function fit_gls(tamsd::AbstractMatrix, dim::Integer, Δt::Real, init_α::Abstra
 
             mask = .!isnan.(lmsd[:,i])
             iC0 = inv(errC0[mask,mask])
-            gR = (Ts[mask,:]'*iC0*Ts[mask,:])^-1*Ts[mask,:]'*iC0[mask,mask]
+            gR = (Ts[mask,:]'*iC0*Ts[mask,:])^-1*Ts[mask,:]'*iC0
             gls[:,i] .= gR*(lmsd[mask,i] .- bias[mask])
             gls[1,i] -= log10(2dim)
 
@@ -188,7 +188,7 @@ function errCov(ts::AbstractVector{T}, dim::Integer, α::Real,  logBase::Integer
         if k > l
             k, l = l, k
         end
-        N1 = h-> ln-l-h+1
+        N1 = h -> ln-l-h+1
         N2 = h -> (h <= l-k+1) ? ( ln-l ) : ( ln-k-h+1 )
 
         return 2/((ln-k)*(ln-l)) *( sum(N1(h)*incrCov(ts,1,h,k,l,K)^2 for h in 2:ln-l; init=0) + sum( N2(h)*incrCov(ts,h,1,k,l,K)^2 for h in 1:ln-k ) )

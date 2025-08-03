@@ -16,6 +16,7 @@ gls = fit_internal(msd, 2, dt, init_A)
 n = 10^4
 h = 0.3
 ts = 1:100
+ln = 100
 dt = step(ts)
 
 f = (s,t) -> 1*(t^(2h)+s^(2h)-abs(s-t)^(2h)) # D = 1
@@ -25,10 +26,7 @@ A = cholesky(Symmetric(S)).U
 X = A'*ξ
 ξ = randn(length(ts), n)
 Y = A'*ξ
-msd = Matrix{Float64}(undef,ln-1,n)
-for i in 1:n
-    msd[:,i] .= estMSD(X[:,i],ln-1) .+ estMSD(Y[:,i],ln-1)
-end
+msd = tamsd([X ;;; Y])
 
 gls, c = fit_gls(msd, 2, dt, fill(0.6,n))
 
