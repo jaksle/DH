@@ -49,7 +49,7 @@ Input:
 - Δt: sampling interval
 - init_α: vector with initial approximate values of anomalous exponent
 Keyword input:
-- precompute = true: if true first tabularise error covariances, if false calculate it for trajectories (could be computationally demanding)
+- precompute = true: if true first tabularise error covariances, if false calculate it for each trajectory
 - precompute_αs = 0.1:0.02:1.6: points at which precompute
 Output:
 - gls: 2×n matrix values of (log10 D, α) estimates

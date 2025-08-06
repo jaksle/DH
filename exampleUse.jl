@@ -9,7 +9,7 @@ ln = 100 # trajectory length
 dt = 1. # time interval
 ts = dt*(1:ln)
 
-K = (s,t) -> D*(t^(2H)+s^(2H)-abs(s-t)^(2H)) # covariance
+K = (s,t) -> D*(t^(2H)+s^(2H)-abs(s-t)^(2H)) # FBM covariance
 S = [K(s,t) for s in ts, t in ts]
 A = cholesky(Symmetric(S)).U
 
@@ -21,7 +21,7 @@ Y = A'*ξ
 
 ## TA-MSD analysis
 
-msd = tamsd([X ;;; Y]) # TA-MSD2D traj
+msd = tamsd([X ;;; Y]) # TA-MSD of 2D traj
 
 ols = fit_ols(msd, 2, dt)
 
