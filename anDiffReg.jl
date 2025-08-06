@@ -1,6 +1,8 @@
 using Statistics, LinearAlgebra, ProgressMeter
 
-
+"""
+    TA-MSD of trajectories. Time should go along first axis, subsequent trajectories along second axis, x, y, z coordinates along third axis.
+"""
 function tamsd(X::AbstractArray{T,N}) where {T <: Real, N}
     ln, n, w =  size(X)
     msd = Matrix{T}(undef, ln-1, n)
@@ -19,7 +21,16 @@ function tamsd(X::AbstractMatrix{T}) where {T <: Real}
     return msd
 end
 
+"""
+    fit_ols(tamsd::AbstractMatrix, dim::Integer, Δt::Real, w::Integer)
 
+Fitting TA-MSD with the OLS method.
+Input:
+- tamsd: ln-1×n  matrix containing the entire TA-MSDs of the n length ln sample trajectories
+- dim: original trajectory dimension (usually 1, 2 or 3)
+- Δt: sampling interval
+- w = max(5,size(tamsd)[1]÷10): integer fitting width size
+"""
 function fit_ols(tamsd::AbstractMatrix, dim::Integer, Δt::Real, w::Integer = max(5,size(tamsd)[1]÷10))
     Ts = [ones(w) log10.(Δt*(1:w))]
     estPar = (Ts'*Ts)^-1*Ts' * log10.(tamsd[1:w,:])
@@ -34,18 +45,18 @@ end
 Fitting TA-MSD with the GLS method.
 Input:
 - tamsd: ln-1×n  matrix containing the entire TA-MSDs of the n length ln sample trajectories
-- dim: original trajectory dimension (1,2 or 3)
+- dim: original trajectory dimension (usually 1, 2 or 3)
 - Δt: sampling interval
-- init_α: initial approximate values of anomalous exponent
+- init_α: vector with initial approximate values of anomalous exponent
 Keyword input:
-- precompute = true : if true first tabularise error covariances, if false calculate it for trajectories (could be computationally demanding)
+- precompute = true: if true first tabularise error covariances, if false calculate it for trajectories (could be computationally demanding)
 - precompute_αs = 0.1:0.02:1.6: points at which precompute
 Output:
 - gls: 2×n matrix values of (log10 D, α) estimates
 - errCov: 2×2×n matrix with estimated parameter error covariances 
 
 For estimation with experimental noise provide also:
-- init_D: initial approximate values of diffusivity
+- init_D: vector with initial approximate values of diffusivity
 - σ: noise amplitude, X_obs = X_true + σξ
 """
 function fit_gls(tamsd::AbstractMatrix, dim::Integer, Δt::Real, init_α::AbstractVector;
@@ -82,7 +93,7 @@ function fit_gls(tamsd::AbstractMatrix, dim::Integer, Δt::Real, init_α::Abstra
             j1 = argmin(abs.(precompute_alphas .- gls[2,i]))
             fitCov[:,:,i] .= (Ts'*iC[:,:,j1]*Ts)^-1
         end
-    else
+    else # separate calculation for each trajectory
         @showprogress for i in 1:n
             errC = errCov(ts, dim, init_α[i])[2]
             bias = -log(10) .* diag(errC) ./2
@@ -98,7 +109,7 @@ function fit_gls(tamsd::AbstractMatrix, dim::Integer, Δt::Real, init_α::Abstra
     return gls, fitCov
 end
 
-
+# with noise
 function fit_gls(tamsd::AbstractMatrix, dim::Integer, Δt::Real, init_α::AbstractVector, init_D::AbstractVector, σ::Real;
      precompute::Bool = true,
      precompute_alphas::AbstractVector = 0.1:0.02:1.6
@@ -143,7 +154,7 @@ function fit_gls(tamsd::AbstractMatrix, dim::Integer, Δt::Real, init_α::Abstra
             iC1 = inv(errC1)
             fitCov[:,:,i] .= (Ts'*iC1*Ts)^-1
         end
-    else
+    else # separate calculation for each trajectory
         @showprogress for i in 1:n
             α0, D0 = init_α[i], init_D[i]
             orgC = errCov(ts, dim, α0)[1]
@@ -177,22 +188,25 @@ function incrCov(ts,i,j,k,l,K)
     K(a,b) + K(a+c,b+d) - K(a,b+d) - K(a+c,b)
 end
 
+"""
+    Covariance betweeen points ts[k] and ts[l] of TA-MSD calculated from trajectory with covariance function K = K(s,t).
+""" 
+function theorCovEff(ts,k,l,ln,K)
+    if k > l
+        k, l = l, k
+    end
+    N1 = h -> ln-l-h+1
+    N2 = h -> (h <= l-k+1) ? ( ln-l ) : ( ln-k-h+1 )
+
+    return 2/((ln-k)*(ln-l)) *( sum(N1(h)*incrCov(ts,1,h,k,l,K)^2 for h in 2:ln-l; init=0) + sum( N2(h)*incrCov(ts,h,1,k,l,K)^2 for h in 1:ln-k ) )
+end
+
 
 """
-Covariance of errors of TA-MSD and log TA-MSD. Data is assumed to come from FBM.
+Covariance matrix of errors of TA-MSD and log TA-MSD. Data is assumed to come from FBM.
 """
 function errCov(ts::AbstractVector{T}, dim::Integer, α::Real,  logBase::Integer = 10) where T<:Real
-    K(s,t) = (α ≈ 1.0) ? 2min(s,t) : (s^α + t^α - abs(s-t)^α) # FBM cov
-    
-    function theorCovEff(ts,k,l,ln,K)
-        if k > l
-            k, l = l, k
-        end
-        N1 = h -> ln-l-h+1
-        N2 = h -> (h <= l-k+1) ? ( ln-l ) : ( ln-k-h+1 )
-
-        return 2/((ln-k)*(ln-l)) *( sum(N1(h)*incrCov(ts,1,h,k,l,K)^2 for h in 2:ln-l; init=0) + sum( N2(h)*incrCov(ts,h,1,k,l,K)^2 for h in 1:ln-k ) )
-    end
+    K(s,t) = (α ≈ 1.0) ? 2min(s,t) : (s^α + t^α - abs(s-t)^α) # 1D FBM cov
 
     ln = length(ts)
     S = float(T)
@@ -218,7 +232,10 @@ function crossCov(ts::AbstractVector{T}, dim::Integer, α::Real) where T <: Real
             N1 = h -> ln-l-h+1
             N2 = h -> (h <= l-k+1) ? ( ln-l ) : ( ln-k-h+1 )
 
-            return 4/((ln-k)*(ln-l)) *( sum(N1(h)*incrCov(ts,1,h,k,l,K)*(==(1,h) + ==(1+k,h+l) - ==(1,h+l) - ==(1+k,h)) for h in 2:ln-l; init=0) + sum( N2(h)*incrCov(ts,h,1,k,l,K)*(==(h,1) + ==(h+k,1+l) - ==(h,1+l) - ==(h+k,1)) for h in 1:ln-k ) )
+            return 4/((ln-k)*(ln-l)) * ( 
+                  sum(N1(h)*incrCov(ts,1,h,k,l,K)*(==(1,h) + ==(1+k,h+l) - ==(1,h+l) - ==(1+k,h)) for h in 2:ln-l; init=0) 
+                + sum( N2(h)*incrCov(ts,h,1,k,l,K)*(==(h,1) + ==(h+k,1+l) - ==(h,1+l) - ==(h+k,1)) for h in 1:ln-k )
+                )
         end
 
         ln = length(ts)
@@ -229,9 +246,6 @@ function crossCov(ts::AbstractVector{T}, dim::Integer, α::Real) where T <: Real
 
         return Symmetric(cov)
 end
-
-
-
 
 """
 Covariance of 1D iid noise TA-MSD
