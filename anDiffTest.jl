@@ -1,5 +1,8 @@
 
+using BenchmarkTools
+using LoopVectorization
 
+##
 cr = errCov(ts, 1, 0.3)[2]
 
 errC[:,:,1] ./ cr # ok
@@ -77,3 +80,69 @@ cov(gls3')
 
 Ts = [ones(ln-1) log10.(ts[1:ln-1])]
 parErr = (Ts'*inv(errC0)*Ts)^-1
+
+## numerical benchmarks 
+
+@benchmark errCov(1:100,2, 0.7)
+@benchmark errCov2(1:100,2, 0.7)
+
+@code_typed errCov(1:100,2, 0.7)
+
+
+function incrCov2(ts,i,j,k,l,K) 
+    @inbounds a, b, c, d = ts[i], ts[j], ts[k], ts[l]
+    @fastmath K(a,b) + K(a+c,b+d) - K(a,b+d) - K(a+c,b)
+end
+
+function errCov2(ts::AbstractVector{T}, dim::Integer, α::Real,  logBase::Integer = 10) where T<:Real
+    K(s,t) = (α ≈ 1.0) ? 2min(s,t) : (s^α + t^α - abs(s-t)^α) # FBM cov
+    
+    function theorCovEff(ts,k,l,ln,K)
+        if k > l
+            k, l = l, k
+        end
+        N1 = h -> ln-l-h+1
+        N2 = h -> (h <= l-k+1) ? ( ln-l ) : ( ln-k-h+1 )
+
+        return 2/((ln-k)*(ln-l)) *( sum(N1(h)*incrCov2(ts,1,h,k,l,K)^2 for h in 2:ln-l; init=0) + sum( N2(h)*incrCov2(ts,h,1,k,l,K)^2 for h in 1:ln-k ) )
+    end
+
+    ln = length(ts)
+    S = float(T)
+    errCov = Matrix{S}(undef, ln-1, ln-1)
+    logErrCov = Matrix{S}(undef, ln-1, ln-1)
+
+    @inbounds for i in 1:ln-1, j in i:ln-1
+        c = theorCovEff(ts,i,j,ln,K)
+        errCov[i,j] = dim*c
+        logErrCov[i,j] = c / ( dim * K(ts[i],ts[i]) * K(ts[j],ts[j]) * log(logBase)^2 ) 
+    end
+
+    return Symmetric(errCov), Symmetric(logErrCov)
+end
+
+function errCov!(M, ts::AbstractVector{T}, dim::Integer, α::Real,  logBase::Integer = 10) where T<:Real
+    K(s,t) = (α ≈ 1.0) ? 2min(s,t) : (s^α + t^α - abs(s-t)^α) # FBM cov
+    
+    function theorCovEff(ts,k,l,ln,K)
+        if k > l
+            k, l = l, k
+        end
+        N1 = h -> ln-l-h+1
+        N2 = h -> (h <= l-k+1) ? ( ln-l ) : ( ln-k-h+1 )
+
+        return 2/((ln-k)*(ln-l)) *( sum(N1(h)*incrCov2(ts,1,h,k,l,K)^2 for h in 2:ln-l; init=0) + sum( N2(h)*incrCov2(ts,h,1,k,l,K)^2 for h in 1:ln-k ) )
+    end
+
+    ln = length(ts)
+
+    @inbounds for i in 1:ln-1, j in i:ln-1
+        c = theorCovEff(ts,i,j,ln,K)
+        M[i,j] = c / ( dim * K(ts[i],ts[i]) * K(ts[j],ts[j]) * log(logBase)^2 )
+        M[j,i] = M[i,j]
+    end
+end
+
+M1 = errCov(1:100,2,0.7)[2]
+M2 = Matrix{Float64}(undef,99,99)
+errCov!(M2,1:100,2,0.7)

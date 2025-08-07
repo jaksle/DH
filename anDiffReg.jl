@@ -63,7 +63,7 @@ function fit_gls(tamsd::AbstractMatrix, dim::Integer, Δt::Real, init_α::Abstra
      precompute::Bool = true,
      precompute_alphas::AbstractVector = 0.1:0.02:1.6
      )
-    ln, n = size(tamsd)[1]+1, size(tamsd)[2] # ! ln is of orignal trajectory
+    ln, n = size(tamsd)[1]+1, size(tamsd)[2] # ln is of orignal trajectory (!)
     ts = Δt*(1:ln)
     Ts = [ones(ln-1) log10.(ts[1:ln-1])]
     gls = Matrix{Float64}(undef, 2, n)
