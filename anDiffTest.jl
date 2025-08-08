@@ -143,6 +143,100 @@ function errCov!(M, ts::AbstractVector{T}, dim::Integer, α::Real,  logBase::Int
     end
 end
 
+
+
+function theorCovEff2(ts,k,l,ln,α) 
+    K(s,t) = (α ≈ 1.0) ? 2min(s,t) : (s^α + t^α - abs(s-t)^α) 
+    k, l = minmax(k, l)
+
+    function incrCov(ts,i,j,k,l,K) 
+        @inbounds a, b, c, d = ts[i], ts[j], ts[k], ts[l]
+        K(a,b) + K(a+c,b+d) - K(a,b+d) - K(a+c,b)
+    end
+
+    S1 = 0.
+    for h in 2:ln-l
+        S1 += (ln-l-h+1) * incrCov(ts,1,h,k,l,K)^2
+    end
+    S2 = 0.
+    for h in 1:ln-k 
+        S2 += ((h <= l-k+1) ? ( ln-l ) : ( ln-k-h+1 )) * incrCov(ts,h,1,k,l,K)^2
+    end
+    return  2/((ln-k)*(ln-l)) * ( S1 + S2  )
+end
+
+
+
 M1 = errCov(1:100,2,0.7)[2]
 M2 = Matrix{Float64}(undef,99,99)
 errCov!(M2,1:100,2,0.7)
+
+function theorCovEff3(ts,k,l,ln,α)
+    K(s,t) = (α ≈ 1.0) ? 2min(s,t) : (s^α + t^α - abs(s-t)^α)
+    function incrCov(ts,i,j,k,l,K) 
+        a, b, c, d = ts[i], ts[j], ts[k], ts[l]
+        K(a,b) + K(a+c,b+d) - K(a,b+d) - K(a+c,b)
+    end
+
+    if k > l
+        k, l = l, k
+    end
+    N1 = h -> ln-l-h+1
+    N2 = h -> (h <= l-k+1) ? ( ln-l ) : ( ln-k-h+1 )
+
+    return 2/((ln-k)*(ln-l)) * ( 
+          sum(N1(h)*incrCov(ts,1,h,k,l,K)^2 for h in 2:ln-l; init=0) 
+        + sum( N2(h)*incrCov(ts,h,1,k,l,K)^2 for h in 1:ln-k )
+    )
+end
+function theorCovEff4(ts,k,l,ln,α)
+    K(s,t) = (α ≈ 1.0) ? 2min(s,t) : (s^α + t^α - abs(s-t)^α)
+    incrCov(a,b,c,d) =  K(a,b) + K(a+c,b+d) - K(a,b+d) - K(a+c,b)
+    k, l = minmax(k, l)
+    ts1, tsk, tsl = ts[1], ts[k], ts[l]
+
+    S1 = sum(h -> (ln-l-h+1) * incrCov(ts1, ts[h], tsk, tsl)^2, 2:ln-l; init=0)
+    S2 = sum(h -> ((h <= l-k+1) ? ( ln-l ) : ( ln-k-h+1 )) * incrCov(ts[h], ts1, tsk, tsl)^2, 1:ln-k)
+
+    return 2/((ln-k)*(ln-l)) * (S1 + S2)
+end
+
+function theorCovEff5(ts,k,l,ln,α::T) where T
+    if k > l
+        k, l = l, k
+    end
+    @inline iK(α, a,b,c,d) =  α ≈ 1 ? 2min(a,b) + 2min(a+c,b+d) - 2min(a,b+d) - 2min(a+c,b) : abs(a-b-d)^α + abs(a+c-b)^α - abs(a-b)^α   - abs(a+c-b-d)^α 
+    
+    s1, s2 = T(0), T(0)
+    c, d = ts[k], ts[l]
+     @inbounds @simd for h in 2:ln-l
+        s1 += (ln-l-h+1) * iK(α, ts[1],ts[h],c,d)^2
+    end
+     @inbounds @simd for h in 1:ln-k
+        s2 += ifelse(h <= l-k+1 , (ln-l) , (ln-k-h+1)) * iK(α, ts[h],ts[1],c,d)^2
+    end
+    return 2/((ln-k)*(ln-l)) * ( s1 + s2)
+end
+
+
+## tylko errCov 
+
+@benchmark errCov(1:100, 2, 0.7)
+
+α = 0.7
+K(s,t) =  (α ≈ 1.0) ? 2min(s,t) : (s^α + t^α - abs(s-t)^α) # 1D FBM cov
+@benchmark theorCovEff5(1:100, 10, 2, 100, α)
+
+function K2(s,t)
+    (α ≈ 1.0) ? 2min(s,t) : (s^α + t^α - abs(s-t)^α)
+end
+
+@benchmark theorCovEff(1:100, 10, 2, 100, K2)
+
+@benchmark testf()
+
+function testf()
+    α = 0.7
+    K(s,t) =  (α ≈ 1.0) ? 2min(s,t) : (s^α + t^α - abs(s-t)^α) # 1D FBM cov
+    theorCovEff(1:100, 10, 2, 100, K)
+end

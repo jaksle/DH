@@ -204,20 +204,17 @@ def errCov(ts, dim, alpha, logBase=10):
     """
     K = lambda s, t: 2 * np.minimum(s, t) if np.abs(alpha - 1.0) < 1e-8 else (s**alpha + t**alpha - np.abs(s - t)**alpha)
     
-
     ln = len(ts)
     errC = np.empty((ln - 1, ln - 1), dtype=np.float64)
     logErrCov = np.empty((ln - 1, ln - 1), dtype=np.float64)
 
     for i in range(ln - 1):
         for j in range(i, ln - 1):
-
             c = theorCovEff(ts, i + 1, j + 1, ln, alpha) 
             errC[i, j] = dim * c
             logErrCov[i, j] = c / (dim * K(ts[i], ts[i]) * K(ts[j], ts[j]) * (np.log(logBase) ** 2))
             errC[j, i] = errC[i, j]
             logErrCov[j, i] = logErrCov[i, j]
-
 
     return errC, logErrCov
 
