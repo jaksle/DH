@@ -1,7 +1,10 @@
 
 
 using Plots, ProgressMeter, LaTeXStrings
+using LinearAlgebra
 
+using CairoMakie
+##
  # 0.35, 10^-3    0.49, 10^-2  0.25, 10^-4  0.6, 10^-4    0.15, 10^-2
  H0, D0 = 0.35, 10^-3 
  n = 10^4
@@ -18,8 +21,24 @@ using Plots, ProgressMeter, LaTeXStrings
  ξ = randn(length(ts), n)
  Y = A'*ξ
 
+## GLS prep
 
- ## msd fit
+hs = 0.1:0.01:0.8
+errC = Array{Float64}(undef,ln-1,ln-1,length(hs))
+bias = Array{Float64}(undef,ln-1,length(hs))
+
+@showprogress for k in eachindex(hs)
+    D0, H0 = 1, hs[k]
+    K = (s,t) -> D0/2*(t^(2H0)+s^(2H0)-abs(s-t)^(2H0))
+    errC[:,:,k] .= [theorCovEff(i,j,ln,K)/(ts[i]^(2hs[k])*ts[j]^(2hs[k])) for i in 1:ln-1, j in 1:ln-1]
+end
+
+for k in eachindex(hs)
+    bias[:,k] .=  -log(10) .* diag(errC[:,:,k]) ./2
+end
+
+
+## msd fit
  
  msd = Matrix{Float64}(undef,ln-1,n)
  for i in 1:n
@@ -37,8 +56,15 @@ using Plots, ProgressMeter, LaTeXStrings
      B[:,i] .= (Ts[1:l,:]'*Ts[1:l,:])^-1*Ts[1:l,:]'*lmsd[1:l,i]
  end
  
- B[1,:] .-= log10(4)
+B[1,:] .-= log10(4)
  
+B2 = Matrix{Float64}(undef, 2, n)
+for i in 1:n
+    B2[:,i] .= (Ts[l+1:end,:]'*Ts[l+1:end,:])^-1*Ts[l+1:end,:]'*lmsd[l+1:end,i]
+end
+B2[1,:] .-= log10(4)
+
+
  # GLS fit
  
  gB = Matrix{Float64}(undef, 2, n)
@@ -55,41 +81,97 @@ using Plots, ProgressMeter, LaTeXStrings
  gB[1,:] .-= log10(4)
  bB[1,:] .-= log10(4)
  
- ## znajdź odchylenia
+## znajdź odchylenia
 using JLD2
 
 #@save "plotSimpleComp.jld2" msd B bB
-@load "plotSimpleComp.jld2" msd B bB
+#@load "plotSimpleComp.jld2" msd B bB
 
 ols = abs.(B[2,:] .- 0.7)
+ols2 = abs.(B2[2,:] .- 0.7)
 gls = abs.(bB[2,:] .- 0.7)
 
-findmax(ols .- gls)
-j =  findmax(ols .- gls)[2]
+js = sortperm(abs.(ols .- gls))
+js2 = sortperm(abs.(ols) .- abs.(gls))
+js3 = sortperm(abs.(ols) .- abs.(ols2))
 
-j = 6 # long time TA-MSD
+##
+j = 7530 #7213  # lap data long time
 
+#j = 2451 # # lap data short time gls impr
+
+#j = 779
+
+# Makie ver
+with_theme(theme_latexfonts()) do
+fig = Figure(size=1 .* (600,450),
+    fontsize = 20,
+)
+ax = Axis(fig[1,1],
+    xlabel = L"$t$ [s]",
+    ylabel = L"MSD [μm$^2$]",
+    ylabelpadding = 0,
+    #title = "Trajectory with misleading short time TA-MSD",
+    title = "Trajectory with misleading long time TA-MSD",
+    xscale = log10,
+    yscale = log10,
+    xticks = (vcat(vec(0.1:0.1:0.5),vec(1:5)), vcat(string.(vec(0.1:0.1:0.5)),string.(vec(1:5))) ),
+    yticks = (vcat(vec(10^-3 * (1:5)), 10^-2), [L"10^{-3}","","","","", L"10^{-2}"]),
+    limits = (nothing,nothing, 0.9msd[1,j], 1.1maximum(msd[:,j]))
+)
+ax.xticklabelsize = 14
+ax.yticklabelsize = 14
+ax.xlabelsize = 22
+ax.ylabelsize = 22
+Makie.lines!(ax,[ts[end÷10], ts[end÷10]],[0.9msd[1,j], 1.1maximum(msd[:,j])],
+    linestyle = :dash,
+    label = "10% of the data",
+    color = :black,
+    alpha = 0.5,
+)
+Makie.scatter!(ax,ts[1:99],msd[:,j],
+    color = :white,#palette(:default)[3],
+    marker = :circle,
+    strokewidth = 1,
+    #markersize = 3,
+    label = "measured TA-MSD",
+)
+lines!(ts, 4D0*ts .^(2H0),
+    label = "exact MSD",
+    color = :black,
+    linestyle = :dash,
+    linewidth = 2,
+)
+axislegend(position = :rb)
+
+save("simpleComp1.pdf",fig)
+fig
+end
+
+## plots version
 vline([ts[end÷10]],linestyle= :dash,
    label = "",
    color = :black,
    alpha = 0.5,
+   size = (500,350)
 )
 plot!(ts[1:99],msd[:,j],
     fontfamily = "Computer Modern",
-    xlabel = "t [s]",
+    xlabel = L"$t$ [s]",
     ylabel = L"MSD [μm$^2$]",
     color = :white,#palette(:default)[3],
     marker = :circle,
     markersize = 3,
     label = "measured TA-MSD",
-    title = "Trajectory with misleading long time TA-MSD",
-    #title = "Trajectory with misleading short time TA-MSD",
+    #title = "Trajectory with misleading long time TA-MSD",
+    title = "Trajectory with misleading short time TA-MSD",
+    #titlelocation=:left,
     xlim = (ts[1],ts[100]+0.1),
     xscale = :log10,
     yscale = :log10,
     xticks = (vcat(vec(0.1:0.1:0.5),vec(1:5)), vcat(string.(vec(0.1:0.1:0.5)),string.(vec(1:5))) ),
     yticks = (vcat(vec(10^-3 * (1:5)), 10^-2), [L"10^{-3}","","","","", L"10^{-2}"]),
-    ylim = (msd[1,j],0.015),
+    ylim = (msd[1,j]*0.9,0.015),
     markerstrokewidth = 0.5,
  )
  plot!(t->4D0*t^(2H0),ts[1],ts[99],
@@ -107,12 +189,12 @@ plot!([],[],linestyle= :dash,
 
 
 
- plot!(t->4*10^B[1,j]*t^(B[2,j]),0,ts[99],
- label = "OLS estimate",
- linewidth = 2,
-)
-plot!(t->4*10^bB[1,j]*t^(bB[2,j]),0,ts[99],
- label = "GLS estimate",
- linewidth = 2,
-)
- savefig("simpleComp1.pdf")
+#  plot!(t->4*10^B[1,j]*t^(B[2,j]),0,ts[99],
+#  label = "OLS estimate",
+#  linewidth = 2,
+# )
+# plot!(t->4*10^bB[1,j]*t^(bB[2,j]),0,ts[99],
+#  label = "GLS estimate",
+#  linewidth = 2,
+# )
+#savefig("simpleComp2.pdf")

@@ -53,6 +53,7 @@ for i in 1:n
 end
 B[1,:] .-= log10(4)
 
+
 ## GLS fit
 
 gB = Matrix{Float64}(undef, 2, n)
@@ -243,7 +244,7 @@ scatter(lts[1:end-1],empErr,
     xticks = (log10.(xt), string.(xt)),
     legend = :topleft,
 )
-savefig("errVar.pdf")
+#savefig("errVar.pdf")
 
 p = Plots.plot([],[],
     fontfamily = "Computer Modern",
@@ -275,4 +276,4 @@ end
 
 display(p)
 
-savefig("errCorr.pdf")
+#savefig("errCorr.pdf")

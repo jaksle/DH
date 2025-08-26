@@ -155,16 +155,16 @@ end
 using CairoMakie
 
 with_theme(theme_latexfonts()) do
-fig = Figure(size = (1200,400))
-ax = Axis(fig[1,1],
+fig = Figure(size =(1200,400))
+ax1 = Axis(fig[1,1],
     ylabel = L"estimated $\alpha$",
     xlabel = L"sample $\alpha$",
     xticks = (1:1:12, string.(2simH[1:1:12])),
     limits= (0,13,-0.5,2.0),
-        title = "Estimated anomalous exponent"
+    title = "Estimated anomalous exponent"
 )
 for k in 1:1:12
-    Makie.violin!(ax,k*ones(n),ols[2,:,k],side=:left,
+    Makie.violin!(ax1,k*ones(n),ols[2,:,k],side=:left,
         color = :dodgerblue2,
         show_median = true,
         medianlinewidth = 0.5,
@@ -174,7 +174,7 @@ for k in 1:1:12
     #     color=:blue,
     #     #markersize = 10,
     # )
-    Makie.violin!(ax,k*ones(n),gls[2,:,k],side=:right,
+    Makie.violin!(ax1,k*ones(n),gls[2,:,k],side=:right,
         color = :tomato,
         medianlinewidth = 0.5,
         show_median = true
@@ -185,14 +185,14 @@ for k in 1:1:12
     #     #markersize = 10,
     # )
 end
-exact = CairoMakie.scatter!(ax, 1:1:12, 2simH[1:1:12],
+exact = CairoMakie.scatter!(ax1, 1:1:12, 2simH[1:1:12],
     marker='⨉',
     color=:black,
     markersize = 10,
 )
 
 #fig
-axislegend(ax,[PolyElement(color = :dodgerblue2,strokewidth=0), PolyElement(color = :tomato,strokewidth=0),exact, LineElement(color=:black,linewidth=0.5)],
+axislegend(ax1,[PolyElement(color = :dodgerblue2,strokewidth=0), PolyElement(color = :tomato,strokewidth=0),exact, LineElement(color=:black,linewidth=0.5)],
     ["OLS", "GLS", "exact value","median"],
     position = :rb
 )
@@ -200,7 +200,7 @@ axislegend(ax,[PolyElement(color = :dodgerblue2,strokewidth=0), PolyElement(colo
 ylab = [L"10^{%$i}" for i in -1.5:0.5:1.5]
 ylab[4] = "1"
 
-ax = Axis(fig[1,2],
+ax2 = Axis(fig[1,2],
     ylabel = L"estimated $D$",
     xlabel = L"sample $\alpha$",
     yticks  = (-1.5:0.5:1.5, ylab ),
@@ -209,7 +209,7 @@ ax = Axis(fig[1,2],
     title = "Estimated diffusivity"
 )
 for k in 1:1:12
-    Makie.violin!(ax,k*ones(n),ols[1,:,k],side=:left,
+    Makie.violin!(ax2,k*ones(n),ols[1,:,k],side=:left,
         color = :dodgerblue2,
         show_median = true,
         medianlinewidth = 0.5,
@@ -219,7 +219,7 @@ for k in 1:1:12
     #     color=:blue,
     #     #markersize = 10,
     # )
-    Makie.violin!(ax,k*ones(n),gls[1,:,k],side=:right,
+    Makie.violin!(ax2,k*ones(n),gls[1,:,k],side=:right,
         color = :tomato,
         show_median = true,
         medianlinewidth = 0.5,
@@ -230,14 +230,15 @@ for k in 1:1:12
     #     #markersize = 10,
     # )
 end
-CairoMakie.scatter!(ax, 1:1:12, zeros(12),
+CairoMakie.scatter!(ax2, 1:1:12, zeros(12),
     marker='⨉',
     color=:black,
     markersize = 10,
 )
+ax1.xlabelsize = 15
+ax1.ylabelsize = 15
 
-fig
-save("violin.pdf",fig)
+#save("violin.pdf",fig)
 fig
 end
 

@@ -30,7 +30,7 @@ end
 
 ## empty plots
 
-p1 = scatter([],[],
+p1 = Plots.scatter([],[],
     fontfamily = "Computer Modern",
     markerstrokewidth=0,
     markersize=0.5,
@@ -43,10 +43,10 @@ p1 = scatter([],[],
     yticks = -0.1:0.1:1.5,
     #label = "OLS",
     label= "",
-    xlabel = L"D\ [\mu m^2/s^{\alpha}]",
-    ylabel = L"α\ [1]",
+    xlabel = L"$D$ [μm$^2$/s$^{\alpha}$]",
+    ylabel = L"$α$ [1]",
 )
-p2 = scatter([],[],
+p2 = Plots.scatter([],[],
     fontfamily = "Computer Modern",
     markerstrokewidth=0,
     markersize=0.5,
@@ -58,7 +58,7 @@ p2 = scatter([],[],
     xlim = (-3.5,-2.5),
     ylim = (-0.1,1.5),
     yticks = -0.1:0.1:1.5,
-    xlabel = L"D\ [\mu m^2/s^{\alpha}]",
+    xlabel = L"$D$ [μm$^2$/s$^{\alpha}$]",
     #ylabel = L"α\ [1]",
 )
 # plot!(p1,[],[],
@@ -68,7 +68,7 @@ p2 = scatter([],[],
 #     label = "error 95% ellipses",
 # )
 
-scatter!(p2,[],[],
+Plots.scatter!(p2,[],[],
     markerstrokewidth=0,
     markersize=0.5,
     alpha = 0.7,
@@ -76,25 +76,25 @@ scatter!(p2,[],[],
     color = palette(:default)[2],
     label = "GLS",
 )
-plot!(p2,[],[],
+Plots.plot!(p2,[],[],
     linewidth = 1,
     color = :black,
     linestyle = :dash,
     label = "error 95% ellipse",
 )
-scatter!(p1, [],[],marker=:x,color=:black,
+Plots.scatter!(p1, [],[],marker=:x,color=:black,
     #label = L"exact $(D,\alpha)$"
     label = "",
 )
-scatter!(p2, [],[],marker=:x,color=:black, label = L"exact $(D,\alpha)$")
+Plots.scatter!(p2, [],[],marker=:x,color=:black, label = L"exact $(D,\alpha)$")
 
-hline!(p1,[0.,0.7,1.2],linecolor=:black,linestyle=:dash,
+Plots.hline!(p1,[0.,0.7,1.2],linecolor=:black,linestyle=:dash,
     #label = L"exact $\alpha$",
     label = "",
     linewidth= 0.5,
     linealpha=0.5,
 )
-hline!(p2,[0.,0.7,1.2],linecolor=:black,linestyle=:dash,
+Plots.hline!(p2,[0.,0.7,1.2],linecolor=:black,linestyle=:dash,
     #label = L"exact $\alpha$",
     label = "",
     linewidth= 0.5,
@@ -142,7 +142,7 @@ end
 gB[1,:] .-= log10(4)
 bB[1,:] .-= log10(4)
 
-scatter!(p1,B[1,1:10^4],B[2,1:10^4],
+Plots.scatter!(p1,B[1,1:10^4],B[2,1:10^4],
     markerstrokewidth=0,
     markersize=0.5,
     alpha = 0.3,
@@ -150,7 +150,7 @@ scatter!(p1,B[1,1:10^4],B[2,1:10^4],
     label = "",
 )
 
-scatter!(p2,bB[1,1:10^4],bB[2,1:10^4],
+Plots.scatter!(p2,bB[1,1:10^4],bB[2,1:10^4],
     markerstrokewidth=0,
     markersize=0.5,
     alpha = 0.3,
@@ -158,8 +158,8 @@ scatter!(p2,bB[1,1:10^4],bB[2,1:10^4],
     label = "",
 )
 
-scatter!(p1, [log10(D0)],[2H0],marker=:x,color=:black, label = "")
-scatter!(p2, [log10(D0)],[2H0],marker=:x,color=:black, label = "")
+Plots.scatter!(p1, [log10(D0)],[2H0],marker=:x,color=:black, label = "")
+Plots.scatter!(p2, [log10(D0)],[2H0],marker=:x,color=:black, label = "")
 
 Σ = [2theorCovEff(i,i2,ln,K)/(4K(ts[i],ts[i])*4K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1] # factor 2!
 
@@ -173,13 +173,13 @@ g1 = t-> sin(t)*sqrt(5.99)
 
 C = sqrt(eM2)
 
-plot!(p1, t->C[1,1]*f(t)+C[1,2]*g1(t) + log10(D0),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 2H0,0,2pi,
+Plots.plot!(p1, t->C[1,1]*f(t)+C[1,2]*g1(t) + log10(D0),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 2H0,0,2pi,
     linewidth = 1,
     color = :blue,
     linestyle = :dash,
     label = "",
 )
-plot!(p2, t->C[1,1]*f(t)+C[1,2]*g1(t) + log10(D0),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 2H0,0,2pi,
+Plots.plot!(p2, t->C[1,1]*f(t)+C[1,2]*g1(t) + log10(D0),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 2H0,0,2pi,
     linewidth = 1,
     color = :blue,
     linestyle = :dash,
@@ -187,7 +187,7 @@ plot!(p2, t->C[1,1]*f(t)+C[1,2]*g1(t) + log10(D0),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 2
 )
 C = sqrt(eM)
 
-plot!(p2, t->C[1,1]*f(t)+C[1,2]*g1(t) + log10(D0),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 2H0,0,2pi,
+Plots.plot!(p2, t->C[1,1]*f(t)+C[1,2]*g1(t) + log10(D0),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 2H0,0,2pi,
     linewidth = 1,
     color = :red,
     linestyle = :dash,
@@ -235,7 +235,7 @@ dOLS = kde(aOLS)#,bandwidth=0.01)
 aGLS = vcat(dat12[2,:],dat22[2,:],dat32[2,:])
 dGLS = kde(aGLS)#,bandwidth=0.01)
 
-p3 = plot(dOLS.x,dOLS.density, permute=(:x,:y),
+p3 = Plots.plot(dOLS.x,dOLS.density, permute=(:x,:y),
     fontfamily = "Computer Modern",
     #ylim = (0, 2.2),
     xlim = (-0.1,1.5),
@@ -245,13 +245,13 @@ p3 = plot(dOLS.x,dOLS.density, permute=(:x,:y),
     linewidth = 1.0,
     #yscale = :log10,
 )
-plot!(dGLS.x,dGLS.density,permute=(:x,:y),
+Plots.plot!(dGLS.x,dGLS.density,permute=(:x,:y),
     label = "",
     xticks = -0.1:0.1:1.5,
     linewidth = 1.0,
     linecolor = palette(:default)[2],
 )
-hline!([0.,0.7,1.2],linecolor=:black,linestyle=:dash,
+Plots.hline!([0.,0.7,1.2],linecolor=:black,linestyle=:dash,
     #label = L"exact $\alpha$",
     label = "",
     linewidth= 0.5,
@@ -262,9 +262,9 @@ hline!([0.,0.7,1.2],linecolor=:black,linestyle=:dash,
 ## plots together
 
 l = @layout [a{0.4w} b{0.4w} c{0.2w}]
-plot!(p1,legend=(0.5,0.3))
-plot!(p2,legend=(0.5,0.3))
-plot!(p3,legend=(0.5,0.3))
-plot(p1,p2,p3,layout = l)
+Plots.plot!(p1,legend=(0.5,0.3))
+Plots.plot!(p2,legend=(0.5,0.3))
+Plots.plot!(p3,legend=(0.5,0.3))
+Plots.plot(p1,p2,p3,layout = l)
 
 savefig("simPlots2.pdf")

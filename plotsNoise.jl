@@ -367,7 +367,7 @@ with_theme(theme_latexfonts()) do
 
     ax = Axis(fig[2,1],
         limits = ((0,50),(0,nothing)),
-        xlabel = L"\sigma^2\ [L^2]",
+        xlabel = L"$\sigma^2$ [L$^2$]",
         ylabel = ylabel = L"\text{var}(\log_{10}\, \hat{D})",
     )
     scatter!(ax,vs,vB[1,:],
@@ -380,7 +380,7 @@ with_theme(theme_latexfonts()) do
 
     ax = Axis(fig[2,2],
         limits = ((0,50),(0,nothing)),
-        xlabel = L"\sigma^2\ [L^2]",
+        xlabel = L"$\sigma^2$ [L$^2$]",
         ylabel = ylabel = L"\text{var}(\hat{\alpha})",
     )
     ols = scatter!(ax,vs,vB[2,:],
@@ -397,6 +397,6 @@ with_theme(theme_latexfonts()) do
     colgap!(fig.layout, 10)
     rowgap!(fig.layout, 10)
 
-    save("noise.pdf",fig)
+    #save("noise.pdf",fig)
     fig
 end

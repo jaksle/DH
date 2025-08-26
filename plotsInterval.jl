@@ -14,11 +14,11 @@ ts = 1:ln
 X = cumsum(randn(ln,n),dims=1)
 ##
 
-plot(t->t+t^(2H0),0.001,0.1,
+Plots.plot(t->t+t^(2H0),0.001,0.1,
     #xscale = :log10,
     #yscale= :log10
 )
-plot!(t->t^(2H0),0.001,0.1,
+Plots.plot!(t->t^(2H0),0.001,0.1,
     #xscale = :log10,
     #yscale= :log10
 )
@@ -96,18 +96,19 @@ end
 
 ## ta-msd plot
 
-k = 300 #556
+k = 300 #556,
 errVar = diag(Σ)
 
 p = Plots.plot(
+    size = (450,300),
     fontfamily = "Computer Modern",
-    xlabel = "t [T]",
+    xlabel = L"$t$ [T]",
     ylabel = L"MSD [L$^2$]",
     #xticks = (log10.(xt), string.(xt)),
     #yticks = (log10.(yt), [L"10^{-3}",L"5\!\cdot\! 10^{-3}", L"10^{-2}", L"5\!\cdot\! 10^{-2}", L"10^{-1}",L"10^0" ]),
     label = "",
-    legend = :top,
-    ylim = (0,60),
+    legend = :topleft,
+    ylim = (0,30),
     xlim = (1,51),
     #xscale = :log10,
     #yscale = :log10
@@ -178,9 +179,10 @@ savefig("intervalAnTraj.svg")
 
 p = Plots.plot(layout=(2,1))
 Plots.scatter!(p[1],B2[1,:],B2[2,:] .-1/2,
+    size = (450,300),
     fontfamily = "Computer Modern",
-    ylabel = L"D\ [L^2/T]",
-    xlabel = L"σ\ [L^2]",
+    ylabel = L"$D$ [L$^2$/T]",
+    xlabel = L"$\sigma$ [L$^2$]",
     markerstrokewidth=0,
     markersize=2.0,
     alpha = 0.3,
@@ -199,8 +201,8 @@ Plots.scatter!(p[2],[],[],
 )
 Plots.scatter!(p[2],gB2[1,:],gB2[2,:] .-1/2,
     fontfamily = "Computer Modern",
-    ylabel = L"D\ [L^2/T]",
-    xlabel = L"σ\ [L^2]",
+    ylabel = L"$D$ [L$^2$/T]",
+    xlabel = L"$\sigma$ [L$^2$]",
     markerstrokewidth=0,
     markersize=2.0,
     alpha = 0.3,

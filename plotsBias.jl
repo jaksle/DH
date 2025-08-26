@@ -18,7 +18,7 @@ yl = copy(xl)
 yl[8] = ""
 yl[9] = ""
 yl[end-2] = ""
-p = plot([],[],
+p = Plots.plot([],[],
     fontfamily = "Computer Modern",
     xlabel = L"k",
     ylabel = "MSD",
@@ -29,7 +29,9 @@ p = plot([],[],
     yticks = (xt, yl),
     xscale = :log10,
     yscale = :log10,
-
+    xlabelfontsize = 13,
+    ylabelfontsize = 13,
+    legendfontsize = 13,
 )
 
 hs = 0.2:0.1:0.5
@@ -54,7 +56,7 @@ pal = palette([palette(:tab10)[4],palette(:tab10)[5],palette(:tab10)[1]],hl)
     mlmsd = mean(lmsd,dims = 2)
 
     col= pal[k]#palette(:viridis,hl)[k]
-    plot!(t->t^(2H0),1,m,
+    Plots.plot!(t->t^(2H0),1,m,
         linestyle = :dash,
         label = "",
         linecolor = col,

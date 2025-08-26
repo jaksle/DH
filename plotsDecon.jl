@@ -58,6 +58,7 @@ end
 
 
 ##
+
 n = 10^4
 H0, D0 = 0.35, 10^-3
 
@@ -113,8 +114,8 @@ K = (s,t) -> 2D0*(t^(2H0)+s^(2H0)-abs(s-t)^(2H0))
 eM = (Ts[1:l,:]'*Σ[1:l,1:l]^-1*Ts[1:l,:])^-1  # GLS
 eM2 = (Ts[1:l,:]'*Ts[1:l,:])^-1*Ts[1:l,:]'*Σ[1:l,1:l]*Ts[1:l,:]*(Ts[1:l,:]'*Ts[1:l,:])^-1 # OLS
 
-f(t) = cos(t)*sqrt(5.99) # 95% elipse
-g1(t) = sin(t)*sqrt(5.99)
+fn(t) = cos(t)*sqrt(5.99) # 95% elipse
+gn(t) = sin(t)*sqrt(5.99)
 
 
 den = kde((eB[1,:],eB[2,:]),boundary=((-3.4,-2.6),(0.4,1.0)),npoints=(500,500) )
@@ -140,10 +141,12 @@ end
 darkRed = colorant"#cc3434"
 
 with_theme(theme_latexfonts()) do
-    fig = Figure(size=(1200,400),figure_padding=(0,20,0,0))
+    fig = Figure(size=(1200,400),figure_padding=(0,20,0,0),
+        fontsize = 20,
+    )
     xlab = [L"10^{%$i}" for i in -3.4:0.2:-2.6]
     xlab[end÷2+1] = L"10^{-3}"
-    xname = L"{D}\ [\mu m^2/s^\alpha]"
+    xname = L"$D$ [μm$^2$/s$^{\alpha}$]"
     ax = Axis(fig[1,1],
         xticks = (-3.4:0.2:-2.6,xlab),
         limits = (-3.4,-2.6, 0.4,1),
@@ -156,7 +159,7 @@ with_theme(theme_latexfonts()) do
         xgridvisible = false,
         ygridvisible = false,
     )
-    gls = scatter!(ax,eB[1,:],eB[2,:],
+    gls = Makie.scatter!(ax,eB[1,:],eB[2,:],
         #markerstrokewidth=0,
         markersize=6,
         alpha = 0.15,
@@ -164,7 +167,7 @@ with_theme(theme_latexfonts()) do
         #label = "",
 
     )
-    scatter!(ax, [log10(D0)],[2H0],
+    Makie.scatter!(ax, [log10(D0)],[2H0],
         marker='⨉',
         color=:black,
         markersize = 15,
@@ -172,8 +175,8 @@ with_theme(theme_latexfonts()) do
 
     C = sqrt(eM)
     θs = LinRange(0,2pi,200)
-    xs =  @. C[1,1]*f(θs)+C[1,2]*g1(θs) + log10(D0)
-    ys = @. C[2,1]*f(θs)+C[2,2]*g1(θs)+ 2H0
+    xs =  @. C[1,1]*fn(θs)+C[1,2]*gn(θs) + log10(D0)
+    ys = @. C[2,1]*fn(θs)+C[2,2]*gn(θs)+ 2H0
     conf = lines!(ax,xs,ys ,
         linewidth = 1.5,
         color = :black,
@@ -191,10 +194,10 @@ with_theme(theme_latexfonts()) do
         xlabelsize= 20,
         ylabelsize = 20,
     )
-    heatmap!(ax2, den.x,den.y,den.density,
+    Makie.heatmap!(ax2, den.x,den.y,den.density,
         colormap = :thermal,
     )
-    scatter!(ax2, [log10(D0)],[2H0],
+    Makie.scatter!(ax2, [log10(D0)],[2H0],
         marker='⨉',
         color=:black,
         markersize = 15,
@@ -209,8 +212,8 @@ with_theme(theme_latexfonts()) do
         xlabelsize= 20,
         ylabelsize = 20,
     )
-    heatmap!(ax3, den.x,den.y,res)
-    cross = scatter!(ax3, [log10(D0)],[2H0],
+    Makie.heatmap!(ax3, den.x,den.y,res)
+    cross = Makie.scatter!(ax3, [log10(D0)],[2H0],
         marker='⨉',
         color=:black,
         markersize = 15,
@@ -219,8 +222,8 @@ with_theme(theme_latexfonts()) do
     axislegend(ax,[MarkerElement(color = :tomato, marker=:circle, alpha = 0.6, markersize = 12),  conf, cross,],["GLS","error 95% ellipse",L"exact ($D, \alpha$)"],
         position = :lt,
     )
+    save("decEx.pdf",fig)
     fig
-    #save("decEx.pdf",fig)
 end
 
 ## data plots multiple 

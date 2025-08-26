@@ -227,7 +227,7 @@ denMarg3 = vec(sum(resI,dims=2))
 denMarg3 .*= 1/(sum(denMarg3)*step(den.x))
 
 ## top row
-xlab = L"{D}\ [L^2/T^\alpha]"
+xlab = L"$D$ [L$^2$/T$^\alpha$]"
 ylab = L"{\alpha}\ [1]"
 xtickL = [L"10^{-1}",L"10^{-0.5}","1",L"10^{0.5}",L"10^{1}"]
 xtick = (-1:0.5:1,xtickL)
@@ -330,7 +330,7 @@ end
 ## bottom row
 
 
-xlab = L"{D}\ [L^2/T^\alpha]"
+xlab = L"$D$ [L$^2$/T$^\alpha$]"
 xtickL = [L"10^{-1}",L"10^{-0.5}","1",L"10^{0.5}",L"10^{1}"]
 xtick = (-1:0.5:1,xtickL)
 ylab = L"{\alpha}\ [1]"

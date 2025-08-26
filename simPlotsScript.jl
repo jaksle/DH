@@ -37,7 +37,7 @@ bB[1,:] .-= log10(4)
 ##
 
 
-scatter!(p1,B[1,1:10^4],B[2,1:10^4],
+Plots.scatter!(p1,B[1,1:10^4],B[2,1:10^4],
     markerstrokewidth=0,
     markersize=0.5,
     alpha = 0.3,
@@ -45,7 +45,7 @@ scatter!(p1,B[1,1:10^4],B[2,1:10^4],
     label = "",
 )
 
-scatter!(p2,bB[1,1:10^4],bB[2,1:10^4],
+Plots.scatter!(p2,bB[1,1:10^4],bB[2,1:10^4],
     markerstrokewidth=0,
     markersize=0.5,
     alpha = 0.3,
@@ -53,8 +53,8 @@ scatter!(p2,bB[1,1:10^4],bB[2,1:10^4],
     label = "",
 )
 
-scatter!(p1, [log10(D0)],[2H0],marker=:x,color=:black, label = "")
-scatter!(p2, [log10(D0)],[2H0],marker=:x,color=:black, label = "")
+Plots.scatter!(p1, [log10(D0)],[2H0],marker=:x,color=:black, label = "")
+Plots.scatter!(p2, [log10(D0)],[2H0],marker=:x,color=:black, label = "")
 
 ##
 
@@ -68,13 +68,13 @@ g1 = t-> sin(t)*sqrt(5.99)
 
 C = sqrt(eM2)
 
-plot!(p1, t->C[1,1]*f(t)+C[1,2]*g1(t) + log10(D0),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 2H0,0,2pi,
+Plots.plot!(p1, t->C[1,1]*f(t)+C[1,2]*g1(t) + log10(D0),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 2H0,0,2pi,
     linewidth = 1,
     color = :blue,
     linestyle = :dash,
     label = "",
 )
-plot!(p2, t->C[1,1]*f(t)+C[1,2]*g1(t) + log10(D0),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 2H0,0,2pi,
+Plots.plot!(p2, t->C[1,1]*f(t)+C[1,2]*g1(t) + log10(D0),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 2H0,0,2pi,
     linewidth = 1,
     color = :blue,
     linestyle = :dash,
@@ -82,7 +82,7 @@ plot!(p2, t->C[1,1]*f(t)+C[1,2]*g1(t) + log10(D0),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 2
 )
 C = sqrt(eM)
 
-plot!(p2, t->C[1,1]*f(t)+C[1,2]*g1(t) + log10(D0),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 2H0,0,2pi,
+Plots.plot!(p2, t->C[1,1]*f(t)+C[1,2]*g1(t) + log10(D0),t->C[2,1]*f(t)+C[2,2]*g1(t)+ 2H0,0,2pi,
     linewidth = 1,
     color = :red,
     linestyle = :dash,

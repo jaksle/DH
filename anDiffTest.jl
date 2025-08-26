@@ -1,6 +1,7 @@
 
 using BenchmarkTools
-using LoopVectorization
+using LinearAlgebra
+#using LoopVectorization
 
 ##
 cr = errCov(ts, 1, 0.3)[2]
@@ -144,15 +145,12 @@ function errCov!(M, ts::AbstractVector{T}, dim::Integer, α::Real,  logBase::Int
 end
 
 
-
-function theorCovEff2(ts,k,l,ln,α) 
+"""
+Specialised TA-MSD covariance for FBM
+"""
+function theorCovEffFBM(ts,k,l,ln,α) 
     K(s,t) = (α ≈ 1.0) ? 2min(s,t) : (s^α + t^α - abs(s-t)^α) 
     k, l = minmax(k, l)
-
-    function incrCov(ts,i,j,k,l,K) 
-        @inbounds a, b, c, d = ts[i], ts[j], ts[k], ts[l]
-        K(a,b) + K(a+c,b+d) - K(a,b+d) - K(a+c,b)
-    end
 
     S1 = 0.
     for h in 2:ln-l
@@ -173,10 +171,6 @@ errCov!(M2,1:100,2,0.7)
 
 function theorCovEff3(ts,k,l,ln,α)
     K(s,t) = (α ≈ 1.0) ? 2min(s,t) : (s^α + t^α - abs(s-t)^α)
-    function incrCov(ts,i,j,k,l,K) 
-        a, b, c, d = ts[i], ts[j], ts[k], ts[l]
-        K(a,b) + K(a+c,b+d) - K(a,b+d) - K(a+c,b)
-    end
 
     if k > l
         k, l = l, k
@@ -224,19 +218,45 @@ end
 @benchmark errCov(1:100, 2, 0.7)
 
 α = 0.7
-K(s,t) =  (α ≈ 1.0) ? 2min(s,t) : (s^α + t^α - abs(s-t)^α) # 1D FBM cov
-@benchmark theorCovEff5(1:100, 10, 2, 100, α)
+K1(s,t) =  (α ≈ 1.0) ? 2min(s,t) : (s^α + t^α - abs(s-t)^α) # 1D FBM cov
+theorCovEff(1:100, 10, 2, 100, K1)
+theorCovEffFBM(1:100, 10, 2, 100, α)
 
-function K2(s,t)
-    (α ≈ 1.0) ? 2min(s,t) : (s^α + t^α - abs(s-t)^α)
+@benchmark theorCovEff(1:100, 10, 2, 100, K1)
+
+@benchmark theorCovEffFBM(1:100, 10, 2, 100, α)
+
+@benchmark crossCovEff(1:100, 10, 2, 100, K1)
+@benchmark crossCovEffFBM(1:100, 10, 2, 100, α)
+
+fit_gls(msd, 2, dt, fill(0.6,n),fill(1.0,n),1.0)
+
+
+# archived function
+function crossCovEff(ts, k, l, ln, K)
+    if k > l
+        k, l = l, k
+    end
+    N1 = h -> ln-l-h+1
+    N2 = h -> (h <= l-k+1) ? ( ln-l ) : ( ln-k-h+1 )
+    
+    return 4/((ln-k)*(ln-l)) * ( 
+            sum(N1(h)*incrCov(ts,1,h,k,l,K)*(==(1,h) + ==(1+k,h+l) - ==(1,h+l) - ==(1+k,h)) for h in 2:ln-l; init=0) 
+        + sum( N2(h)*incrCov(ts,h,1,k,l,K)*(==(h,1) + ==(h+k,1+l) - ==(h,1+l) - ==(h+k,1)) for h in 1:ln-k )
+        )
 end
 
-@benchmark theorCovEff(1:100, 10, 2, 100, K2)
+function crossCovEffFBM(ts, k, l, ln, α)
+     K(s,t) = (α ≈ 1.0) ? 2min(s,t) : (s^α + t^α - abs(s-t)^α) 
+    k, l = minmax(k, l)
 
-@benchmark testf()
-
-function testf()
-    α = 0.7
-    K(s,t) =  (α ≈ 1.0) ? 2min(s,t) : (s^α + t^α - abs(s-t)^α) # 1D FBM cov
-    theorCovEff(1:100, 10, 2, 100, K)
+    S1 = 0.
+    @simd for h in 2:ln-l
+        S1 += (ln-l-h+1) * incrCov(ts,1,h,k,l,K)*(==(1,h) + ==(1+k,h+l) - ==(1,h+l) - ==(1+k,h))
+    end
+    S2 = 0.
+    @simd for h in 1:ln-k 
+        S2 += ((h <= l-k+1) ? ( ln-l ) : ( ln-k-h+1 )) * incrCov(ts,h,1,k,l,K)*(==(h,1) + ==(h+k,1+l) - ==(h,1+l) - ==(h+k,1))
+    end
+    return  4/((ln-k)*(ln-l)) * ( S1 + S2  )
 end
