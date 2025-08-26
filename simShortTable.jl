@@ -235,10 +235,14 @@ CairoMakie.scatter!(ax2, 1:1:12, zeros(12),
     color=:black,
     markersize = 10,
 )
-ax1.xlabelsize = 15
-ax1.ylabelsize = 15
+ax1.xlabelsize = 20
+ax1.ylabelsize = 20
+ax1.titlesize = 20
+ax2.xlabelsize = 20
+ax2.ylabelsize = 20
+ax2.titlesize = 20
 
-#save("violin.pdf",fig)
+save("violin.pdf",fig)
 fig
 end
 
