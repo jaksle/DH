@@ -78,27 +78,28 @@ yt = [10^-3, 5*10^-3, 10^-2, 5*10^-2, 10^-1,1]
 
 ## making plots
 
-k = 470# 220! 470! 98 550 880
+k = 220# 220! 470! 98 550 880
 j = findfirst(hs .>= B[2,k]/2)
 errVar = diag(errC[:,:,j])
 
-p = plot(
+p = Plots.plot(
+    size = 0.8 .* (600,450),
     fontfamily = "Computer Modern",
-    xlabel = "t [s]",
+    xlabel = L"$t$ [s]",
     ylabel = L"MSD [μm$^2$]",
     xticks = (log10.(xt), string.(xt)),
     yticks = (log10.(yt), [L"10^{-3}",L"5\!\cdot\! 10^{-3}", L"10^{-2}", L"5\!\cdot\! 10^{-2}", L"10^{-1}",L"10^0" ]),
     label = "",
     legend = :topleft,
  )
-plot!(lts, lmsd[:,k] .-bias[:,j],
+Plots.plot!(lts, lmsd[:,k] .-bias[:,j],
     ribbon = sqrt.(2errVar),
     color = :grey,#palette(:default)[2],
     label = "",
     linewidth = 0,
     #alpha = 0,
 )
- scatter!(lts, lmsd[:,k] .-bias[:,j],
+Plots.scatter!(lts, lmsd[:,k] .-bias[:,j],
     #yerrors = sqrt.(2errVar),
     ribbon = sqrt.(2errVar),
     color = :black,#palette(:default)[2],
@@ -106,7 +107,7 @@ plot!(lts, lmsd[:,k] .-bias[:,j],
     markersize = 4,
     label = "",
 )
-scatter!(lts, lmsd[:,k],
+Plots.scatter!(lts, lmsd[:,k],
     marker = :circle,
     markercolor = :white,
     markersize = 3,
@@ -120,19 +121,19 @@ scatter!(lts, lmsd[:,k],
 #     markersize = 3,
 #     label = "TA-MSD used for OLS",
 # )
-scatter!([],[],
+Plots.scatter!([],[],
     color = :black,#palette(:default)[2],
     marker = :xcross,
     markersize = 4,
     label = "bias corrected TA-MSD"
 )
-plot!(lt->B[2,k]*lt+B[1,k]+log10(4),minimum(lts),maximum(lts),
+Plots.plot!(lt->B[2,k]*lt+B[1,k]+log10(4),minimum(lts),maximum(lts),
     color = palette(:default)[1],
     linestyle = :dash,
     linewidth = 3,
     label = "OLS fit"
 )
-plot!(lt->bB[2,k]*lt+bB[1,k]+log10(4),minimum(lts),maximum(lts),
+Plots.plot!(lt->bB[2,k]*lt+bB[1,k]+log10(4),minimum(lts),maximum(lts),
     color = palette(:default)[2],
     linestyle = :dash,
     linewidth = 3,
@@ -141,7 +142,7 @@ plot!(lt->bB[2,k]*lt+bB[1,k]+log10(4),minimum(lts),maximum(lts),
 
 display(p)
 
-savefig("trajMSD2.pdf")
+savefig("trajMSD1.pdf")
 
 ## errors
 
@@ -163,7 +164,7 @@ scatter(bB[1,:],bB[2,:],
     xlim = (-5,-0.5),
     ylim = (-0.1,1.7),
     label = "GLS",
-    xlabel = L"D\ [\mu m^2/s^{\alpha}]",
+    xlabel = L"MSD [μm$^2$]",
     ylabel = L"α\ [1]",
 )
 
@@ -207,8 +208,8 @@ scatter(B[1,:],bB[1,:],
     markersize=1.0,
     alpha = 0.3,
     color = palette(:default)[6],
-    xlabel = L"\hat D_{\mathrm{OLS}}\ [\mu m^2/s^{\alpha}]",
-    ylabel = L"\hat D_{\mathrm{GLS}}\ [\mu m^2/s^{\alpha}]",
+    xlabel = L"$\hat D_{\mathrm{OLS}}$  [μm$^2$]",
+    ylabel = L"$\hat D_{\mathrm{GLS}}$ [μm$^2$]",
     label = "estimated D"
 
 )
@@ -307,7 +308,8 @@ den2 = kde((bB[1,:],bB[2,:]); boundary=((-5,-0.5),(-0.3,1.7)),npoints=(500,500),
 
 df = den2.density .- den1.density
 
-heatmap(den1.x,den1.y,df',
+Plots.heatmap(den1.x,den1.y,df',
+    size = 0.8 .* (600,450), 
     fontfamily = "Computer Modern",
     color = :seismic,
     clim = (-0.25,0.25),
@@ -316,14 +318,14 @@ heatmap(den1.x,den1.y,df',
     #title = "Density difference between GLS and OLS",
     xticks = (-5:-1, [L"10^{%$s}" for s in -5:-1]),
     label = "GLS",
-    xlabel = L"D\ [\mu m^2/s^{\alpha}]",
+    xlabel = L"$D$ [μm$^2$]",
     ylabel = L"α\ [1]",
     framestyle = :box,
     titlelocation = :center,
     grid = :on,
 
 )
-annotate!(-2.75,1.6,"Density difference between GLS and OLS")
+annotate!(-2.75,1.6,Plots.text("Density difference between GLS and OLS",:center, 12, "Computer Modern"))
 
 savefig("datadenDiff.pdf")
 
@@ -340,7 +342,7 @@ heatmap(hist2' .- hist1', clim=(-5,5))
 
 ## new scatterplot + histogram
 
-p1 = scatter(B[1,:],B[2,:],
+p1 = Plots.scatter(B[1,:],B[2,:],
     fontfamily = "Computer Modern",
     markerstrokewidth=0,
     markersize=0.7,
@@ -351,12 +353,12 @@ p1 = scatter(B[1,:],B[2,:],
     xlim = (-5,-1),
     ylim = (-0.1,1.7),
     label = "OLS",
-    xlabel = L"D\ [\mu m^2/s^{\alpha}]",
+    xlabel = L"$D$ [μm$^2$]",
     ylabel = L"α\ [1]",
     framestyle = :box
 )
 
-scatter!(bB[1,:],bB[2,:],
+Plots.scatter!(bB[1,:],bB[2,:],
     fontfamily = "Computer Modern",
     markerstrokewidth=0,
     markersize=0.7,
@@ -367,7 +369,7 @@ scatter!(bB[1,:],bB[2,:],
     label = "GLS"
 )
 
-p2 = stephist(B[2,:],normed=true,
+p2 = Plots.stephist(B[2,:],normed=true,
     fontfamily = "Computer Modern",
     fill=true, fillalpha=0.2,
     label = "OLS ",
@@ -376,7 +378,7 @@ p2 = stephist(B[2,:],normed=true,
     ylabel = L"histogram of $p{}_\alpha$",
     permute = (:x,:y)
 )
-stephist!(bB[2,:],normed=true,
+Plots.stephist!(bB[2,:],normed=true,
     color = palette(:default)[2],
     fill=true, fillalpha=0.2,
     label = "GLS ",
@@ -385,9 +387,11 @@ stephist!(bB[2,:],normed=true,
 
 
 l = @layout [a{0.7w} b{0.3w}]
-plot!(p1,legend=(0.2,0.8))
-plot!(p2,legend=(0.7,0.8))
+Plots.plot!(p1,legend=(0.2,0.8))
+Plots.plot!(p2,legend=(0.7,0.8))
 
-plot(p1,p2,layout = l)
+Plots.plot(p1,p2,layout = l,
+    size = 0.8 .* (600,450),
+)
 
 savefig("dataScatt.pdf")
