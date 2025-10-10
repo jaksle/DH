@@ -18,8 +18,14 @@ X = A'*ξ
 ξ = randn(length(ts), n)
 Y = A'*ξ
 
+##
+
 d = []
 for k in 1:n
     push!(d,"X$k" => X[:,k])
     push!(d,"Y$k" => Y[:,k])
 end
+
+dat = DataFrame(d)
+
+CSV.write("2D FBM.csv",dat)
