@@ -231,22 +231,25 @@ empCor = empCov ./ (sqrt.(empErr .* empErr[1:50]'))
 
 
 
-scatter(lts[1:end-1],empErr,
+Plots.scatter(lts[1:end-1],empErr,
+    size = (450,300), 
     marker = :square,
     markercolor = :white,
     markersize = 3,
     yscale= :log10,
     #xscale= :log10,
     fontfamily = "Computer Modern",
-    xlabel = "t [s]",
+    xlabel = L"$t$ [s]",
     ylabel = "variance",
     label = "sample variance of log TA-MD errors",
     xticks = (log10.(xt), string.(xt)),
     legend = :topleft,
+    #xlabelfontsize = 10,
 )
-#savefig("errVar.pdf")
+savefig("errVar.pdf")
 
 p = Plots.plot([],[],
+    size = (450,300), 
     fontfamily = "Computer Modern",
     xlabel = L"error index $j$",
     ylabel = "correlation",
@@ -276,4 +279,4 @@ end
 
 display(p)
 
-#savefig("errCorr.pdf")
+savefig("errCorr.pdf")

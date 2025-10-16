@@ -1,7 +1,7 @@
-using DataFrames, CSV
-using LinearAlgebra
+using DataFrames, CSV, LinearAlgebra
 
 ##
+
 
 H, D = 0.4, 1 # FBM parameters: Hurst index H and diffusivity D
 n = 10^3 # number of trajectories
@@ -18,6 +18,7 @@ X = A'*ξ
 ξ = randn(length(ts), n)
 Y = A'*ξ
 
+##
 
 d = []
 for k in 1:n
@@ -26,3 +27,5 @@ for k in 1:n
 end
 
 dat = DataFrame(d)
+
+CSV.write("2D FBM.csv",dat)
