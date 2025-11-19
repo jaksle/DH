@@ -6,8 +6,8 @@ using .AnDiffReg
 
 ##
 
-α, D = 0.8, 1 # FBM parameters: Hurst index H and diffusivity D
-n = 10^5 # number of trajectories
+α, D = 0.8, 1
+n = 10^6 # number of trajectories
 ln = 200 # trajectory length
 dt = 0.01 # time interval
 ts = dt*(1:ln)
@@ -31,42 +31,54 @@ Y = A'*ξ
 ols, covOLS = fit_ols(msd, d, dt)  # here 10% default window is used
 gls, covGLS = fit_gls(msd, d, dt, ols[2,:]) 
 
+
 ## JB gaussianity
+using JLD2
 
 
-XY = [X ;;; Y]
-lns = 25:5:150
-ts = dt*(1:ln)
-w = 10
-Ts = [ones(ln) log10.(ts[1:ln])]
-S = (Ts[1:w,:]'*Ts[1:w,:])^-1 * Ts[1:w,:]'
-jbo = Vector{Float64}(undef,length(lns))
-jbos = similar(jbo)
-jbg = similar(jbo)
-jbgs = similar(jbo)
+function f(X,Y,d, dt,ln)
+    lns = 25:5:200
+    ts = dt*(1:ln)
+    w = 10
+    Ts = [ones(ln) log10.(ts[1:ln])]
+    S = (Ts[1:w,:]'*Ts[1:w,:])^-1 * Ts[1:w,:]'
 
-for (k,l) in enumerate(lns)
-    msd = tamsd(XY[1:l,:,:])
-    lmsd = log10.(msd) 
-    ols = S * lmsd[1:w,:]
-    ols[1,:] .-= log10(2d)
+    jbo = Vector{Float64}(undef,length(lns))
+    jbos = similar(jbo)
+    jbg = similar(jbo)
+    jbgs = similar(jbo)
+    ols = Matrix{Float64}(undef,2,n)
+    gls = similar(ols)
+    z = similar(ols)
 
-    gls, _ = fit_gls(msd,d,dt,ols[2,:])
+    for (k,l) in enumerate(lns)
+        msd = tamsd(@view X[1:l,:]) + tamsd(@view Y[1:l,:])
+        lmsd = log10.(msd[1:w,:]) 
+        ols .= S * lmsd
+        ols[1,:] .-= log10(2d)
 
-    jbos[k] = JarqueBeraTest(ols[1,:]).JB + JarqueBeraTest(ols[2,:]).JB
-    ols .-= mean(ols,dims=2)
-    c = cov(ols')
-    z = c^(-1/2)*ols
-    jbo[k] = JarqueBeraTest(z[1,:]).JB + JarqueBeraTest(z[2,:]).JB
+        gls .= fit_gls(msd,d,dt,ols[2,:])[1]
 
-    jbgs[k] = JarqueBeraTest(gls[1,:]).JB + JarqueBeraTest(gls[2,:]).JB
-    gls .-= mean(gls,dims=2)
-    c = cov(gls')
-    z = c^(-1/2)*gls
-    jbg[k] = JarqueBeraTest(z[1,:]).JB + JarqueBeraTest(z[2,:]).JB
-    println(k)
+        jbos[k] = JarqueBeraTest(ols[1,:]).JB + JarqueBeraTest(ols[2,:]).JB
+        ols .-= mean(ols,dims=2)
+        c = Symmetric(cov(ols'))
+        z .= sqrt(c)^-1*ols
+        jbo[k] = JarqueBeraTest(z[1,:]).JB + JarqueBeraTest(z[2,:]).JB
 
+        jbgs[k] = JarqueBeraTest(gls[1,:]).JB + JarqueBeraTest(gls[2,:]).JB
+        gls .-= mean(gls,dims=2)
+        c = Symmetric(cov(gls'))
+        z .= sqrt(c)^-1*gls
+        jbg[k] = JarqueBeraTest(z[1,:]).JB + JarqueBeraTest(z[2,:]).JB
+        println(k)
+
+    end
+
+    @save "gaussianity.jld2" lns jbo jbos jbg jbgs # PC WMat
 end
+
+f(X,Y,d,dt,ln)
+## 
 
 ##
 fig = Figure()
