@@ -346,7 +346,8 @@ with_theme(theme_latexfonts()) do
         color = :tomato,
         marker = :utriangle,
     )
-    axislegend(ax4,position=:ct)
+    axislegend(ax4,position=:rc)
+
+    save("lenComp.pdf",fig)
     fig
-    save("inputLen.pdf",fig)
 end

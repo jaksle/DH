@@ -14,7 +14,7 @@ ln = 6
 n = 10^6
 X = randn(ln,n)
 
-thC = noiseC.(ln,1:ln-1,(1:ln-1)')
+thC = noiseCov.(ln,1:ln-1,(1:ln-1)')
 
 msd = Matrix{Float64}(undef,ln-1,n)
 for i in 1:n
@@ -254,8 +254,9 @@ A = cholesky(Symmetric(S)).U
 orgX = A'*ξ
 
 for (iv,v) in enumerate(vs)
-    σ = sqrt(v)
+    println(iv)
 
+    σ = sqrt(v)
     X = orgX + σ .* randn(ln,n) # 1D
 
     # msd fit
@@ -329,10 +330,12 @@ end
 
 ##
 
-#using JLD2
+using JLD2
 #@load "varComp.jld2" mB mbB vB vbB
 #@save "varComp.jld2" mB mbB vB vbB
 
+##
+lsize = 16
 with_theme(theme_latexfonts()) do
     fig = Figure(size = (800,400))
 
@@ -341,7 +344,9 @@ with_theme(theme_latexfonts()) do
         ylabel = L"\langle \log_{10}\, \hat{D} \rangle",
         title = L"Results for $\log_{10}\, \hat{D}$"
     )
-
+    ax.xlabelsize = lsize
+    ax.ylabelsize = lsize
+    ax.titlesize = lsize
     scatter!(ax,vs,mB[1,:],
         color = :dodgerblue2,
     )
@@ -356,6 +361,9 @@ with_theme(theme_latexfonts()) do
         ylabel = L"\langle\hat{\alpha}\rangle",
         title = L"Results for $\hat{\alpha}$"
     )
+    ax.xlabelsize = lsize
+    ax.ylabelsize = lsize
+    ax.titlesize = lsize
     scatter!(ax,vs,mB[2,:],
         color = :dodgerblue2,
     )
@@ -370,6 +378,9 @@ with_theme(theme_latexfonts()) do
         xlabel = L"$\sigma^2$ [L$^2$]",
         ylabel = ylabel = L"\text{var}(\log_{10}\, \hat{D})",
     )
+    ax.xlabelsize = lsize
+    ax.ylabelsize = lsize
+    ax.titlesize = lsize
     scatter!(ax,vs,vB[1,:],
         color = color = :dodgerblue2,
     )
@@ -383,6 +394,9 @@ with_theme(theme_latexfonts()) do
         xlabel = L"$\sigma^2$ [L$^2$]",
         ylabel = ylabel = L"\text{var}(\hat{\alpha})",
     )
+    ax.xlabelsize = lsize
+    ax.ylabelsize = lsize
+    ax.titlesize = lsize
     ols = scatter!(ax,vs,vB[2,:],
         color = :dodgerblue2,    
     )

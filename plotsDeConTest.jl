@@ -188,10 +188,13 @@ resI[:,j2:end] .= res[:,j2:end]
 
 resI ./= (sum(resI)*step(den.x)*step(den.y))
 
-#using JLD2
+using JLD2
 #@save "deConT.jld2" den resI
+
+#@load "deConT.jld2" den resI
 ##
 
+resO = res
 thDen = [( -1 <= x <= 1 && ( 0.4 <= y <= 0.6 || 0.8 <= y <= 1.0)) ? 1/(0.4*2) : 0. for x in den.x, y in den.y ]
 
 sum((thDen .- den.density) .^2)*step(den.x)*step(den.y)
@@ -217,20 +220,12 @@ denMarg3 = vec(sum(resI,dims=1))
 denMarg3 .*= 1/(sum(denMarg3)*step(den.y))
 
 
-denMarg = vec(sum(den.density,dims=2))
-denMarg .*= 1/(sum(denMarg)*step(den.x))
-
-denMarg2 = vec(sum(res,dims=2))
-denMarg2 .*= 1/(sum(denMarg2)*step(den.x))
-
-denMarg3 = vec(sum(resI,dims=2))
-denMarg3 .*= 1/(sum(denMarg3)*step(den.x))
-
 ## top row
 xlab = L"$D$ [L$^2$/T$^\alpha$]"
 ylab = L"{\alpha}\ [1]"
 xtickL = [L"10^{-1}",L"10^{-0.5}","1",L"10^{0.5}",L"10^{1}"]
 xtick = (-1:0.5:1,xtickL)
+lsize = 18
 
 with_theme(theme_latexfonts()) do
 fig = Figure(size=(800,400))
@@ -245,7 +240,9 @@ ax = Axis(ga[1,1],
     ylabel = ylab,
     title = "Estimation results"
 )
-
+ax.xlabelsize = lsize
+ax.ylabelsize = lsize
+ax.titlesize = lsize
 th = poly!(ax, Rect(-1,0.4,2,0.2),
     color = :silver,
     strokewidth = 1,
@@ -270,6 +267,9 @@ ax = Axis(ga[1,2],
     yticklabelsvisible = false,
     limits = (0,3.1,0.2,1.2)
 )
+ax.xlabelsize = lsize
+ax.ylabelsize = lsize
+ax.titlesize = lsize
 hist!(ax,bB[2,:],normalization=:pdf,direction=:x,
     color = (:red,0.5),
     strokewidth = 1,
@@ -297,6 +297,9 @@ ax2 = Axis(gb[1,1],
     title = "Density estimate"
     #ylabel = ylab,
 )
+ax2.xlabelsize = lsize
+ax2.ylabelsize = lsize
+ax2.titlesize = lsize
 heatmap!(ax2,den.x,den.y,den.density,
     colormap = :thermal,
 )
@@ -306,7 +309,9 @@ ax = Axis(gb[1,2],
     yticklabelsvisible = false,
     xlabel = L"density $p_\alpha$",
 )
-
+ax.xlabelsize = lsize
+ax.ylabelsize = lsize
+ax.titlesize = lsize
 lines!(ax, [0,2.5,2.5,0],[0.4,0.4,0.6,0.6],
     color = :black,
     linewidth = 1.5,
@@ -323,8 +328,8 @@ lines!(ax,denMarg,den.y,
 colsize!(gb, 1, Relative(4/5))
 colgap!(gb,10)
 
-#fig
 save("deconI1.pdf",fig)
+fig
 end
 
 ## bottom row
@@ -348,16 +353,22 @@ ax = Axis(ga[1,1],
     title = "Simple deconvolution",
     ylabel = ylab,
 )
+ax.xlabelsize = lsize
+ax.ylabelsize = lsize
+ax.titlesize = lsize
 heatmap!(ax,den.x,den.y,resO,
     #colormap = :thermal,
 )
 
 ax = Axis(ga[1,2],
-    limits = (0,3.1,0.2,1.2),
+    limits = (0,3.5,0.2,1.2),
+    xticks = [1,2,3],
     yticklabelsvisible = false,
     xlabel = L"density $p_\alpha$",
 )
-
+ax.xlabelsize = lsize
+ax.ylabelsize = lsize
+ax.titlesize = lsize
 lines!(ax, [0,2.5,2.5,0],[0.4,0.4,0.6,0.6],
     color = :black,
     linewidth = 1.5,
@@ -383,6 +394,9 @@ ax = Axis(gb[1,1],
     title = "Interpolated deconvolution",
     #ylabel = ylab,
 )
+ax.xlabelsize = lsize
+ax.ylabelsize = lsize
+ax.titlesize = lsize
 heatmap!(ax,den.x,den.y,resI,
     #colormap = :thermal,
 )
@@ -392,7 +406,9 @@ ax = Axis(gb[1,2],
     yticklabelsvisible = false,
     xlabel = L"density $p_\alpha$",
 )
-
+ax.xlabelsize = lsize
+ax.ylabelsize = lsize
+ax.titlesize = lsize
 lines!(ax, [0,2.5,2.5,0],[0.4,0.4,0.6,0.6],
     color = :black,
     linewidth = 1.5,
@@ -409,6 +425,7 @@ lines!(ax,denMarg3,den.y,
 colsize!(gb, 1, Relative(4/5))
 colgap!(gb,10)
 
-#fig
 save("deconI2.pdf",fig)
+fig
 end
+
