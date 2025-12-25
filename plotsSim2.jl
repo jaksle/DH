@@ -1,5 +1,5 @@
 
-using Plots, ProgressMeter, LaTeXStrings
+using ProgressMeter, LaTeXStrings
 using Statistics, Distributions, LinearAlgebra
 
 include("funs.jl")
@@ -44,7 +44,7 @@ p1 = Plots.scatter([],[],
     #label = "OLS",
     label= "",
     xlabel = L"$D$ [μm$^2$/s$^{\alpha}$]",
-    ylabel = L"$α$ [1]",
+    ylabel = L"$α$",
 )
 p2 = Plots.scatter([],[],
     fontfamily = "Computer Modern",
@@ -68,25 +68,25 @@ p2 = Plots.scatter([],[],
 #     label = "error 95% ellipses",
 # )
 
-Plots.scatter!(p2,[],[],
-    markerstrokewidth=0,
-    markersize=0.5,
-    alpha = 0.7,
-    #color = palette(:default)[1],
-    color = palette(:default)[2],
-    label = "GLS",
-)
-Plots.plot!(p2,[],[],
-    linewidth = 1,
-    color = :black,
-    linestyle = :dash,
-    label = "error 95% ellipse",
-)
-Plots.scatter!(p1, [],[],marker=:x,color=:black,
-    #label = L"exact $(D,\alpha)$"
-    label = "",
-)
-Plots.scatter!(p2, [],[],marker=:x,color=:black, label = L"exact $(D,\alpha)$")
+# Plots.scatter!(p2,[],[],
+#     markerstrokewidth=0,
+#     markersize=0.5,
+#     alpha = 0.7,
+#     #color = palette(:default)[1],
+#     color = palette(:default)[2],
+#     label = "GLS",
+# )
+# Plots.plot!(p2,[],[],
+#     linewidth = 1,
+#     color = :black,
+#     linestyle = :dash,
+#     #label = "error 95% ellipse",
+# )
+# Plots.scatter!(p1, [],[],marker=:x,color=:black,
+#     #label = L"exact $(D,\alpha)$"
+#     label = "",
+# )
+#Plots.scatter!(p2, [],[],marker=:x,color=:black, label = L"exact $(D,\alpha)$")
 
 Plots.hline!(p1,[0.,0.7,1.2],linecolor=:black,linestyle=:dash,
     #label = L"exact $\alpha$",

@@ -67,122 +67,109 @@ end
 #plot(0.5 .- bias1)
 #plot!(0.5 .- bias2)
 
-## old plots
 
-p = plot(layout = (2,1))
-scatter!(p[1],lns, vlD,
-    fontfamily = "Computer Modern",
-    markerstrokewidth = 0,
-    markersize = 3,
-    color =palette(:default)[1],
-    title = L"true $α = 0.5$", 
-    xlim = (lns[1],lns[end]),
-    xticks = vcat(2,5,vec(10:10:50)),
-    label = L"OLS estimation of $D$",
-    ylabel = L"${}_\mathrm{tw}\mathrm{var}(\log{}_{10}\hat D)$",
-    linewidth = 2,
-)
-plot!(p[1],lns,vlD,
-    color =palette(:default)[1],
-    alpha = 0.2,
-    label = "",
-
-)
-scatter!(p[1],lns, gvlD,
-    fontfamily = "Computer Modern",
-    color =palette(:default)[1],
-    markerstrokewidth = 0,
-    markersize = 3,
-    marker = :utriangle,
-    linestyle = :dot,
-    label = L"GLS estimation of $D$",
-    #ylabel = L"${}_\mathrm{tw}\mathrm{var}(\log{}_\mathrm{tw}\hat D)$",
-    linewidth = 2,
-)
-plot!(p[1],lns,gvlD,
-    color =palette(:default)[1],
-    alpha = 0.2,
-    label = "",
-
-)
-scatter!(p[2],lns, vlD,
-    fontfamily = "Computer Modern",
-    color =palette(:default)[1],
-    markerstrokewidth = 0,
-    markersize = 3,
-    xlim = (lns[1],lns[end]),
-    ylim = (0.0044,0.0046),
-    xticks = vcat(2,5,vec(10:10:50)),
-    label = "",
-    ylabel = L"${}_\mathrm{tw}\mathrm{var}(\log{}_{10}\hat D)$",
-    xlabel = "length of TA-MSD used",
-    linewidth = 2,
-)
-plot!(p[2],lns,vlD,
-    color =palette(:default)[1],
-    alpha = 0.2,
-    label = "",
-
-)
-
-scatter!(p[2],lns, gvlD,
-    fontfamily = "Computer Modern",
-    color =palette(:default)[1],
-    markerstrokewidth = 0,
-    markersize = 3,
-    marker = :utriangle,
-    label = "",
-    #ylabel = L"${}_\mathrm{tw}\mathrm{var}(\log{}_\mathrm{tw}\hat D)$",
-    linewidth = 2,
-)
-plot!(p[2],lns,gvlD,
-    color =palette(:default)[1],
-    alpha = 0.2,
-    label = "",
-
-)
-
-#savefig("inputLenD.pdf")
 ##
 
-#p = plot(layout = (2,1))
-scatter(lns, v2H,
-    fontfamily = "Computer Modern",
-    markerstrokewidth = 0,
-    markersize = 3,
-    color =palette(:default)[2],
-    title = L"true $α = 0.5$", 
-    xlim = (lns[1],lns[end]),
-    xticks = vcat(2,5,vec(10:10:50)),
-    label = L"OLS estimation of $α$",
-    ylabel = L"${}_\mathrm{tw}\mathrm{var}(\hat α)$",
-    ylim = (0.01,0.045),
-    yticks = 0.01:0.005:0.045,
-    linewidth = 2,
-)
-plot!(lns,v2H,
-    color =palette(:default)[2],
-    alpha = 0.2,
-    label = "",
 
-)
-scatter!(lns, gv2H,
-    fontfamily = "Computer Modern",
-    color =palette(:default)[2],
-    markerstrokewidth = 0,
-    markersize = 3,
-    marker = :utriangle,
-    linestyle = :dot,
-    label = L"GLS estimation of $α$",
-    #ylabel = L"${}_\mathrm{tw}\mathrm{var}(2H)$",
-    xlabel = "length of TA-MSD used",
-)
-plot!(lns,gv2H,
-    color =palette(:default)[2],
-    alpha = 0.2,
-    label = "",
+## 
+using CairoMakie
 
-)
+with_theme(theme_latexfonts()) do
+    fig = Figure(size = (1200,400),
+        fontsize = 22,
+    )
+    darkRed = colorant"#cc3434"
+    ax = Axis(fig[1, 1],
+        #title = L"true $\alpha = 0.5$",
+        titlesize = 22, 
+        ylabel = L"var($\hat{\alpha}$)",
+        xlabelsize = 22,
+        #xlabel = "length of TA-MSD used",
+        ylabelsize = 22,
+        xticks = vcat(2,5,vec(10:10:50)),
+        yticks = [0,0.02,.05]
+    )
+    CairoMakie.xlims!(ax,1,51)
+    CairoMakie.ylims!(ax,0.0,0.05)
+    CairoMakie.scatter!(ax,lns,v2H,
+        label = L"OLS estimation of $α$",
+        color = :dodgerblue2,
+    )
+    CairoMakie.scatter!(ax,lns,gv2H,
+        label = L"GLS estimation of $α$",
+        color = :tomato,
+        marker = :utriangle,
+    )
+
+    ax2 = Axis(fig[2, 1],
+        #title = L"true $\alpha = 0.5$",
+        titlesize = 22, 
+        ylabel = L"$\langle\hat{\alpha}\rangle - \alpha$",
+        xlabelsize = 22,
+        xlabel = L"length $m$ of TA-MSD used ",
+        ylabelsize = 22,
+        xticks = vcat(2,5,vec(10:10:50)),
+        yticks = -0.06:0.02:0.00,
+        #yticks = 0.00:0.005:0.045,
+    )
+    CairoMakie.xlims!(ax2,1,51)
+    #CairoMakie.ylims!(ax2,0.0,0.045)
+    CairoMakie.scatter!(ax2,lns,m2H .- 0.5,
+        label = L"OLS estimation of $α$",
+        color = :dodgerblue2,
+    )
+    CairoMakie.scatter!(ax2,lns,gm2H .-0.5,
+        label = L"GLS estimation of $α$",
+        color = :tomato,
+        marker = :utriangle,
+    )
 
 
-#savefig("inputLenH.pdf")
+    ax3 = Axis(fig[1, 2],
+        #title = L"true $\alpha = 0.5$",
+        titlesize = 22, 
+        ylabel = L"var($\log_{10} \hat{D}$)",
+        xlabelsize = 22,
+        #xlabel = "length of TA-MSD used",
+        ylabelsize = 22,
+        xticks = vcat(2,5,vec(10:10:50)),
+        yticks = 0.01:0.01:0.03,
+    )
+    CairoMakie.xlims!(ax3,1,51)
+    CairoMakie.ylims!(ax3,0.01,0.03)
+    CairoMakie.scatter!(ax3,lns,vlD,
+        label = L"OLS estimation of $α$",
+        color = :dodgerblue2,
+    )
+    CairoMakie.scatter!(ax3,lns,gvlD,
+        label = L"GLS estimation of $α$",
+        color = :tomato,
+        marker = :utriangle,
+    )
+
+    ax4 = Axis(fig[2, 2],
+        #title = L"true $\alpha = 0.5$",
+        titlesize = 22, 
+        ylabel = L"$\langle\log_{10}\,\hat{D}\rangle - \log_{10}\,D$",
+        xlabelsize = 22,
+        xlabel = L"length $m$ of TA-MSD used ",
+        ylabelsize = 22,
+        xticks = vcat(2,5,vec(10:10:50)),
+        yticks = [-.04,-0.02,0]
+    )
+    CairoMakie.xlims!(ax4,1,51)
+    #CairoMakie.ylims!(ax3,0.0,0.03)
+    s1 = CairoMakie.scatter!(ax4,lns,mlD,
+        label = "OLS",
+        color = :dodgerblue2,
+    )
+    s2 = CairoMakie.scatter!(ax4,lns,gmlD,
+        label = "GLS",
+        color = :tomato,
+        marker = :utriangle,
+    )
+    axislegend(ax4,position=:rc)
+
+    save("lenComp.pdf",fig)
+    fig
+end

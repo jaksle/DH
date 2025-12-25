@@ -1,6 +1,6 @@
 
-using Plots, LinearAlgebra, ProgressMeter, LaTeXStrings
-
+#using Plots
+using  LinearAlgebra, ProgressMeter, LaTeXStrings
 include("funs.jl")
 
 ##
@@ -252,7 +252,7 @@ with_theme(theme_latexfonts()) do
 end
 
 
-## second row, load lenCmp
+## second row, load lenCmp.jl
 using CairoMakie
 
 with_theme(theme_latexfonts()) do
@@ -348,6 +348,6 @@ with_theme(theme_latexfonts()) do
     )
     axislegend(ax4,position=:rc)
 
-    save("lenComp.pdf",fig)
+    #save("lenComp.pdf",fig)
     fig
 end

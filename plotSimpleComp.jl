@@ -1,6 +1,6 @@
 
 
-using Plots, ProgressMeter, LaTeXStrings
+using LaTeXStrings
 using LinearAlgebra
 
 using CairoMakie
@@ -85,18 +85,19 @@ B2[1,:] .-= log10(4)
 using JLD2
 
 #@save "plotSimpleComp.jld2" msd B bB
-#@load "plotSimpleComp.jld2" msd B bB
+@load "plotSimpleComp.jld2" msd B bB
 
 ols = abs.(B[2,:] .- 0.7)
 ols2 = abs.(B2[2,:] .- 0.7)
 gls = abs.(bB[2,:] .- 0.7)
 
+js0 = sortperm(ols)
 js = sortperm(abs.(ols .- gls))
 js2 = sortperm(abs.(ols) .- abs.(gls))
 js3 = sortperm(abs.(ols) .- abs.(ols2))
-
+js4 = sortperm(ols2)
 ##
-j = 7530 #7213  # lap data long time
+ # lap data long time
 
 #j = 2451 # # lap data short time gls impr
 
@@ -104,9 +105,16 @@ j = 7530 #7213  # lap data long time
 
 # Makie ver
 with_theme(theme_latexfonts()) do
-fig = Figure(size=1 .* (600,450),
-    fontsize = 20,
+fig = Figure(size=1 .* (800,350),
+    fontsize = 14,
 )
+xt = ([0.1,0.2,0.5,1,2,5], string.([0.1,0.2,0.5,1,2,5]) )
+yt = ([10^-3,2*10^-3,5*10^-3, 10^-2], [L"10^{-3}",L"2\!\cdot\! 10^{-3}",L"5\!\cdot\! 10^{-3}", L"10^{-2}"])
+
+j1, j2 = 9193, 6414 #2413 # 6414 553
+mm, M = 0.9min(msd[1,j1],msd[1,j2]), 1.1max(1.1maximum(msd[:,j1]), 1.1maximum(msd[:,j2]))
+j = j1 # 7530 #7213 
+fs = 16
 ax = Axis(fig[1,1],
     xlabel = L"$t$ [s]",
     ylabel = L"MSD [μm$^2$]",
@@ -115,20 +123,20 @@ ax = Axis(fig[1,1],
     title = "Trajectory with misleading long time TA-MSD",
     xscale = log10,
     yscale = log10,
-    xticks = (vcat(vec(0.1:0.1:0.5),vec(1:5)), vcat(string.(vec(0.1:0.1:0.5)),string.(vec(1:5))) ),
-    yticks = (vcat(vec(10^-3 * (1:5)), 10^-2), [L"10^{-3}","","","","", L"10^{-2}"]),
-    limits = (nothing,nothing, 0.9msd[1,j], 1.1maximum(msd[:,j]))
+    xticks = xt,
+    yticks = yt,
+    limits = (nothing,nothing, mm, M)
 )
-ax.xticklabelsize = 14
-ax.yticklabelsize = 14
-ax.xlabelsize = 22
-ax.ylabelsize = 22
-Makie.lines!(ax,[ts[end÷10], ts[end÷10]],[0.9msd[1,j], 1.1maximum(msd[:,j])],
-    linestyle = :dash,
-    label = "10% of the data",
-    color = :black,
-    alpha = 0.5,
-)
+ax.xticklabelsize = fs
+ax.yticklabelsize = fs
+ax.xlabelsize = fs
+ax.ylabelsize = fs
+# Makie.lines!(ax,[ts[end÷10], ts[end÷10]],[0.9msd[1,j], 1.1maximum(msd[:,j])],
+#     linestyle = :dash,
+#     label = "10% of the data",
+#     color = :black,
+#     alpha = 0.5,
+# )
 Makie.scatter!(ax,ts[1:99],msd[:,j],
     color = :white,#palette(:default)[3],
     marker = :circle,
@@ -136,15 +144,67 @@ Makie.scatter!(ax,ts[1:99],msd[:,j],
     #markersize = 3,
     label = "measured TA-MSD",
 )
+Makie.scatter!(ax,ts[1:10],msd[1:10,j],
+    color = :grey,#palette(:default)[3],
+    marker = :circle,
+    strokewidth = 1,
+    #markersize = 3,
+    label = "points used for the estiamation",
+)
 lines!(ts, 4D0*ts .^(2H0),
     label = "exact MSD",
     color = :black,
     linestyle = :dash,
     linewidth = 2,
 )
-axislegend(position = :rb)
+axislegend(position = :lt)
+j = j2 #7530
+ax = Axis(fig[1,2],
+    xlabel = L"$t$ [s]",
+    #ylabel = L"MSD [μm$^2$]",
+    ylabelpadding = 0,
+    title = "Trajectory with misleading short time TA-MSD",
+    #title = "Trajectory with misleading long time TA-MSD",
+    xscale = log10,
+    yscale = log10,
+    xticks = xt,
+    yticks = (yt[1], ["", "", "", ""]),
+    limits = (nothing,nothing, mm, M)
+)
+ax.xticklabelsize = fs
+ax.yticklabelsize = fs
+ax.xlabelsize = fs
+ax.ylabelsize = fs
+# Makie.lines!(ax,[ts[end÷10], ts[end÷10]],[0.9msd[1,j], 1.1maximum(msd[:,j])],
+#     linestyle = :dash,
+#     label = "10% of the data",
+#     color = :black,
+#     alpha = 0.5,
+# )
+Makie.scatter!(ax,ts[1:99],msd[:,j],
+    color = :white,#palette(:default)[3],
+    marker = :circle,
+    strokewidth = 1,
+    #markersize = 3,
+    label = "measured TA-MSD",
+)
+Makie.scatter!(ax,ts[1:10],msd[1:10,j],
+    color = :grey,#palette(:default)[3],
+    marker = :circle,
+    strokewidth = 1,
+    #markersize = 3,
+    label = "points used for the estimation",
+)
+lines!(ts, 4D0*ts .^(2H0),
+    label = "exact MSD",
+    color = :black,
+    linestyle = :dash,
+    linewidth = 2,
+)
+#axislegend(position = :lt)
 
-save("simpleComp1.pdf",fig)
+
+save("simpleComp.pdf",fig)
 fig
 end
 
