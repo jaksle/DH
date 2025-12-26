@@ -149,7 +149,7 @@ Makie.scatter!(ax,ts[1:10],msd[1:10,j],
     marker = :circle,
     strokewidth = 1,
     #markersize = 3,
-    label = "points used for the estiamation",
+    label = "points used for the OLS estimation",
 )
 lines!(ts, 4D0*ts .^(2H0),
     label = "exact MSD",

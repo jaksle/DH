@@ -1,4 +1,4 @@
-using Plots, MAT, ProgressMeter, LaTeXStrings
+using CairoMakie, MAT, ProgressMeter, LaTeXStrings
 using Statistics, Distributions, LinearAlgebra
 
 include("funs.jl")
@@ -74,6 +74,102 @@ gB[1,:] .-= log10(4)
 bB[1,:] .-= log10(4)
 
 
+##
+
+## err heteroscedasticity, cor
+
+empErr = zeros(99)
+empCov = zeros(99,50)
+c = 0
+for j in 1:size(lmsd,2)
+    if bB[2,j] > 0.2
+        err = @. lmsd[:,j] - (bB[2,j]*lts+bB[1,j]+log10(4))
+        for l in 1:50
+            empCov[:,l] .+= err[l] .* err
+        end
+        empErr .+= err .^2
+        c += 1
+    end
+end
+
+empErr ./= c
+empCov ./= c
+empCor = empCov ./ (sqrt.(empErr .* empErr[1:50]'))
+
+##
+xt = [0.1,0.2,0.5,1,2,5]
+yt = [10^-3, 5*10^-3, 10^-2, 5*10^-2, 10^-1,1]
+
+with_theme(theme_latexfonts()) do
+fig = Figure(size = (1200,400),
+    fontsize = 22,
+    figure_padding=(0,20,5,0)
+)
+
+ax1 = Axis(fig[1,1],
+    title = "Variance of TA-MSD errors",
+    xlabel = L"$t$ [s]",
+    ylabel = "variance",
+    xticks = (log10.(xt), string.(xt)),
+    yscale = log10,
+)
+CairoMakie.scatter!(ax1, lts,empErr,
+    marker = :rect,
+    markersize = 16,
+    strokewidth = 1,
+    strokecolor = :purple,
+    color = :orchid1
+)
+ax2 = Axis(fig[1,2],
+    title = "Correlation of TA-MSD errors",
+    xlabel = L"$t$ [s]",
+    ylabel = "correlation",
+    limits = (0,nothing,-0.6,1.1),
+    #xticks = 0:25:100,
+    yticks = -0.5:0.5:1,
+    #xticks = (log10.(xt), string.(xt)),
+)
+
+
+lst = [3,5,10,15,20,50]
+#pal = :rainbow_bgyr_35_85_c72_n256 #:Set1_3 # :RdYlGn_4
+cls = [:red,:orange,:yellow,:lawngreen,:turquoise,:blue]
+mrks = [:circle,:square,:utriangle,:diamond,:hexagon,:star]
+for (k,l) in enumerate(lst)
+    CairoMakie.scatterlines!(ax2, 1::99,empCor[:,l],
+        label = L"k = %$l",
+        linewidth = 0.5,
+        #linealpha = 0.5,
+        color = cls[k],
+        marker = mrks[k],
+        strokewidth=0,
+        markersize=6,
+    )
+end
+axislegend(ax2,position=:cc)
+#save("err.pdf",fig)
+fig
+end
+##
+
+Plots.scatter(lts[1:end-1],empErr,
+    size = (450,300), 
+    marker = :square,
+    markercolor = :white,
+    markersize = 3,
+    yscale= :log10,
+    #xscale= :log10,
+    fontfamily = "Computer Modern",
+    xlabel = L"$t$ [s]",
+    ylabel = "variance",
+    label = "sample variance of log TA-MD errors",
+    xticks = (log10.(xt), string.(xt)),
+    legend = :topleft,
+    #xlabelfontsize = 10,
+)
+savefig("errVar.pdf")
+
+
 ## err plot log
 
 xt = [0.1,0.2,0.3,0.4,0.5,1,2,3,4,5]
@@ -105,6 +201,8 @@ end
 
 lmsdS = log10.(msdS)
 
+
+##
 
 
 p = plot(

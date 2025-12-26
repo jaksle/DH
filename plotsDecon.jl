@@ -141,8 +141,8 @@ end
 darkRed = colorant"#cc3434"
 
 with_theme(theme_latexfonts()) do
-    fig = Figure(size=(1200,400),figure_padding=(0,20,0,0),
-        fontsize = 20,
+    fig = Figure(size=(1200,400),figure_padding=(0,30,0,0),
+        fontsize = 22,
     )
     xlab = [L"10^{%$i}" for i in -3.4:0.2:-2.6]
     xlab[end÷2+1] = L"10^{-3}"
@@ -155,7 +155,7 @@ with_theme(theme_latexfonts()) do
         xlabelsize= 20,
         ylabelsize = 20,
         xlabel = xname,
-        ylabel = L"{\alpha}\ [1]",
+        ylabel = L"{\alpha}",
         xgridvisible = false,
         ygridvisible = false,
     )
@@ -219,9 +219,9 @@ with_theme(theme_latexfonts()) do
         markersize = 15,
     )
 
-    axislegend(ax,[MarkerElement(color = :tomato, marker=:circle, alpha = 0.6, markersize = 12),  conf, cross,],["GLS","error 95% ellipse",L"exact ($D, \alpha$)"],
-        position = :lt,
-    )
+    # axislegend(ax,[MarkerElement(color = :tomato, marker=:circle, alpha = 0.6, markersize = 12),  conf, cross,],["GLS","error 95% ellipse",L"exact ($D, \alpha$)"],
+    #     position = :lt,
+    # )
     save("decEx.pdf",fig)
     fig
 end

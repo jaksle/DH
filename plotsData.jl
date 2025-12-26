@@ -1,7 +1,8 @@
-using Plots, MAT, ProgressMeter, LaTeXStrings
+using CairoMakie, MAT, ProgressMeter, LaTeXStrings
 using Statistics, Distributions, LinearAlgebra
-
+using StatsBase
 include("funs.jl")
+
 ##
 
 file = matopen("interphase_traj_l100.mat")
@@ -70,11 +71,224 @@ end
 
 gB[1,:] .-= log10(4)
 bB[1,:] .-= log10(4)
-#cB[1,:] .-= log10(4)
+
+##
+
+using KernelDensity
+
+den1 = kde((B[1,:],B[2,:]); boundary=((-5,-0.5),(-0.3,1.7)),npoints=(500,500), 
+    bandwidth = (0.06,0.06)
+    #bandwidth = (0.04,0.04)
+)
+den2 = kde((bB[1,:],bB[2,:]); boundary=((-5,-0.5),(-0.3,1.7)),npoints=(500,500), 
+    bandwidth = (0.06,0.06)
+    #bandwidth = (0.04,0.04)
+)
+
+
 ## msd traj plot
 
-xt = [0.1,0.2,0.3,0.4,0.5,1,2,3,4,5]
+xt = [0.1,0.2,0.5,1,2,5]
 yt = [10^-3, 5*10^-3, 10^-2, 5*10^-2, 10^-1,1]
+errVar = diag(errC[:,:,j])
+
+##
+
+with_theme(theme_latexfonts()) do
+fig = Figure(size = (1200,800),
+    fontsize = 22,
+)
+ax1 = Axis(fig[1,1],
+    xlabel = L"$t$ [s]",
+    ylabel = L"MSD [μm$^2$]",
+    xticks = (log10.(xt), string.(xt)),
+    yticks = (log10.(yt), [L"10^{-3}",L"5\!\cdot\! 10^{-3}", L"10^{-2}", L"5\!\cdot\! 10^{-2}", L"10^{-1}",L"10^0" ]),
+)
+k = 220
+j = findfirst(hs .>= B[2,k]/2)
+band!(ax1, lts, lmsd[:,k] .-bias[:,j] .- sqrt.(2errVar), lmsd[:,k] .-bias[:,j] .+ sqrt.(2errVar),
+    color = :grey,
+    alpha = 0.5,
+)
+
+CairoMakie.scatter!(ax1,lts, lmsd[:,k],
+    label = "original TA-MSD",
+    color = :white,
+    strokewidth = 1.5,
+)
+CairoMakie.scatter!(ax1,lts, lmsd[:,k] .-bias[:,j],
+    label = "bias corrected TA-MSD",
+    marker='⨉',
+    color = :black,
+    markersize = 10,
+    #strokewidth = 1,
+)
+CairoMakie.lines!(ax1, lts, B[2,k] .* lts .+ B[1,k] .+ log10(4),
+    linestyle = :dash,
+    linewidth = 3,
+    color = :dodgerblue2,
+    label = "OLS"
+)
+CairoMakie.lines!(ax1, lts, bB[2,k] .* lts .+ bB[1,k] .+ log10(4),
+    linestyle = :dash,
+    linewidth = 3,
+    color = :tomato,
+    label = "GLS"
+)
+
+axislegend(ax1, position = :lt)
+ax2 = Axis(fig[1,2],
+    xlabel = L"$t$ [s]",
+    ylabel = L"MSD [μm$^2$]",
+    xticks = (log10.(xt), string.(xt)),
+    yticks = (log10.(yt), [L"10^{-3}",L"5\!\cdot\! 10^{-3}", L"10^{-2}", L"5\!\cdot\! 10^{-2}", L"10^{-1}",L"10^0" ]),
+)
+k =  476 # 220! 470! 98 550 880
+j = findfirst(hs .>= B[2,k]/2)
+CairoMakie.scatter!(ax2,lts, lmsd[:,k],
+    color = :white,
+    strokewidth = 1.5,
+)
+CairoMakie.scatter!(ax2,lts, lmsd[:,k] .-bias[:,j],
+    label = "bias corrected TA-MSD",
+    marker='⨉',
+    color = :black,
+    markersize = 10,
+    #strokewidth = 1,
+)
+band!(ax2, lts, lmsd[:,k] .-bias[:,j] .- sqrt.(2errVar), lmsd[:,k] .-bias[:,j] .+ sqrt.(2errVar),
+    color = :grey,
+    alpha = 0.5,
+)
+CairoMakie.lines!(ax2, lts, B[2,k] .* lts .+ B[1,k] .+ log10(4),
+    linestyle = :dash,
+    linewidth = 3,
+    color = :dodgerblue2,
+    label = "OLS"
+)
+CairoMakie.lines!(ax2, lts, bB[2,k] .* lts .+ bB[1,k] .+ log10(4),
+    linestyle = :dash,
+    linewidth = 3,
+    color = :tomato,
+    label = "GLS"
+)
+
+
+gc = fig[2,1] = GridLayout()
+axc1 = Axis(gc[1,1],
+    xlabel = L"$D$ [μm$^2$/s^\alpha]",
+    ylabel = L"α",
+    xticks = (-5:-1, [L"10^{%$s}" for s in -5:-1]),
+    yticks = 0:0.3:1.5,
+    limits = (-5,-0.5,-0.1,1.5),
+    xgridvisible = false,
+    ygridvisible = false,
+)
+CairoMakie.scatter!(axc1,B[1,:],B[2,:],
+    markersize = 2,
+    color = :dodgerblue2,
+
+)
+CairoMakie.scatter!(axc1,bB[1,:],bB[2,:],
+    markersize = 2,
+    color = :tomato,
+
+)
+axislegend(axc1,[
+    MarkerElement(color = :dodgerblue2, marker=:circle, markersize = 12),
+    MarkerElement(color = :tomato, marker=:circle, markersize = 12), ],["OLS","GLS"],
+    position = :lt,
+)
+
+axc2 = Axis(gc[1,2],
+    xlabel = L"histogram of $p_\alpha$",
+    limits = (0,nothing,-0.1,1.5),
+    yticklabelsvisible = false,
+    xticks = [0, 1.5],
+    xgridvisible = false,
+    ygridvisible = false,
+)
+bins = LinRange(-0.2,1.6,20)
+h = fit(Histogram,B[2,:],bins)
+h = normalize(h,mode=:pdf)
+CairoMakie.stairs!(axc2,h.weights,h.edges[1][1:end-1],
+    color = :blue,
+    linewidth = 2,
+)
+CairoMakie.hist!(axc2, B[2,:], direction=:x,
+    color = (:dodgerblue2,0.3),
+    bins = bins,
+    normalization = :pdf
+)
+h = fit(Histogram,bB[2,:],bins)
+h = normalize(h,mode=:pdf)
+CairoMakie.stairs!(axc2,h.weights,h.edges[1][1:end-1],
+    color = :red,
+    linewidth = 2,
+)
+CairoMakie.hist!(axc2, bB[2,:], direction=:x,
+    color = (:tomato,0.3),
+    bins = bins,
+    normalization = :pdf
+)
+colsize!(gc,2,Relative(1/4))
+
+gd = fig[2,2] = GridLayout()
+axd1 = Axis(gd[1,1],
+    limits = (-5,-0.5,-0.1,1.5),
+    xticks = (-5:-1, [L"10^{%$s}" for s in -5:-1]),
+    xlabel = L"$D$ [μm$^2$/s$^\alpha$]",
+    yticks = 0:0.3:1.5,
+    ylabel = L"\alpha",
+)
+hm = CairoMakie.heatmap!(axd1,den1.x,den1.y, den2.density .- den1.density,
+    colormap = :seismic,
+    colorrange = (-0.2,0.2),
+)
+text!(axd1,-0.55,1.35, text = "Density difference between GLS and OLS",
+    align = (:right,:bottom)
+)
+Colorbar(gd[1, 2], hm,
+    #minorticks = IntervalsBetween(2),
+    #minorticksvisible = true,
+)
+
+save("data.pdf",fig)
+fig
+end
+
+
+##
+Plots.scatter!(bB[1,:],bB[2,:],
+    fontfamily = "Computer Modern",
+    markerstrokewidth=0,
+    markersize=0.7,
+    #alpha = 0.5,
+    #color = :black,
+    color = palette(:default)[2],
+    framestyle = :box,
+    label = "GLS"
+)
+
+
+fig
+
+##
+
+
+# Plots.plot!(lt->B[2,k]*lt+B[1,k]+log10(4),minimum(lts),maximum(lts),
+#     color = palette(:default)[1],
+#     linestyle = :dash,
+#     linewidth = 3,
+#     label = "OLS fit"
+# )
+# Plots.plot!(lt->bB[2,k]*lt+bB[1,k]+log10(4),minimum(lts),maximum(lts),
+#     color = palette(:default)[2],
+#     linestyle = :dash,
+#     linewidth = 3,
+#     label = "GLS fit"
+# )
+
 
 ## making plots
 
