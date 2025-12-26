@@ -4,6 +4,13 @@ using LaTeXStrings
 using LinearAlgebra
 
 using CairoMakie
+
+
+H0, D0 = 0.35, 10^-3 
+n = 10^4
+ln = 100
+dt = 0.0567
+ts = dt*(1:ln)
 ##
  # 0.35, 10^-3    0.49, 10^-2  0.25, 10^-4  0.6, 10^-4    0.15, 10^-2
  H0, D0 = 0.35, 10^-3 
@@ -85,16 +92,16 @@ B2[1,:] .-= log10(4)
 using JLD2
 
 #@save "plotSimpleComp.jld2" msd B bB
-@load "plotSimpleComp.jld2" msd B bB
+@load "plotSimpleComp.jld2" msd B bB # na PC w dom
 
 ols = abs.(B[2,:] .- 0.7)
-ols2 = abs.(B2[2,:] .- 0.7)
+#ols2 = abs.(B2[2,:] .- 0.7)
 gls = abs.(bB[2,:] .- 0.7)
 
 js0 = sortperm(ols)
 js = sortperm(abs.(ols .- gls))
 js2 = sortperm(abs.(ols) .- abs.(gls))
-js3 = sortperm(abs.(ols) .- abs.(ols2))
+#js3 = sortperm(abs.(ols) .- abs.(ols2))
 js4 = sortperm(ols2)
 ##
  # lap data long time
