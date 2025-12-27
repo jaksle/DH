@@ -114,17 +114,15 @@ end
 f()
 ## 
 using JLD2
-@load "gaussianity.jld2" lns jbo jbos jbg jbgs 
+@load "gaussianity.jld2" lns jbo jbos jbg jbgs # PC WMat
 n = 10^5
 
-##
-with_theme(theme_latexfonts()) do
-fig = Figure()
 
-fig
-end
 
 ##
+α, D = 0.8, 1
+d = 2
+
 
 with_theme(theme_latexfonts()) do
 
@@ -134,7 +132,7 @@ ax = Axis(fig[1,1],
     ylabel = "Jarque-Bera statistic",
     xlabel = "trajectory length",
     xticks = 25:25:200,
-    yticks = 0.0002:0.0002:0.0008,
+    yticks = 0.0002:0.0002:0.0008,# [ "", "", "",L"10^{-4}\!\cdot\!8"]),
     limits = (20,205,nothing,nothing),
     title = L"\textbf{Non-Gaussianity of} $(\log_{10}\, \hat{D},\, \hat{\alpha})$"
 )
@@ -150,7 +148,7 @@ scatter!(ax,lns,jbgs,
 axislegend(ax,position = :rc)
 
 ax2 = Axis(fig[1,2],
-    ylabel = "α [1]",
+    ylabel = "α",
     xlabel = L"$D$ [L$^2$/T$^\alpha$]",
     limits = (0.3,2.5,0.6,1.0),
     title = "Diffusivity errors in linear scale"

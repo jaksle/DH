@@ -5,7 +5,7 @@ using LinearAlgebra
 
 using CairoMakie
 
-
+##
 H0, D0 = 0.35, 10^-3 
 n = 10^4
 ln = 100
@@ -214,54 +214,3 @@ lines!(ax,ts, 4D0*ts .^(2H0),
 save("simpleComp.pdf",fig)
 fig
 end
-
-## plots version
-vline([ts[end÷10]],linestyle= :dash,
-   label = "",
-   color = :black,
-   alpha = 0.5,
-   size = (500,350)
-)
-plot!(ts[1:99],msd[:,j],
-    fontfamily = "Computer Modern",
-    xlabel = L"$t$ [s]",
-    ylabel = L"MSD [μm$^2$]",
-    color = :white,#palette(:default)[3],
-    marker = :circle,
-    markersize = 3,
-    label = "measured TA-MSD",
-    #title = "Trajectory with misleading long time TA-MSD",
-    title = "Trajectory with misleading short time TA-MSD",
-    #titlelocation=:left,
-    xlim = (ts[1],ts[100]+0.1),
-    xscale = :log10,
-    yscale = :log10,
-    xticks = (vcat(vec(0.1:0.1:0.5),vec(1:5)), vcat(string.(vec(0.1:0.1:0.5)),string.(vec(1:5))) ),
-    yticks = (vcat(vec(10^-3 * (1:5)), 10^-2), [L"10^{-3}","","","","", L"10^{-2}"]),
-    ylim = (msd[1,j]*0.9,0.015),
-    markerstrokewidth = 0.5,
- )
- plot!(t->4D0*t^(2H0),ts[1],ts[99],
-    label = "exact MSD",
-    color = :black,
-    linestyle = :dash,
-    linewidth = 2,
- )
-
-plot!([],[],linestyle= :dash,
-    label = "10% of the data",
-    color = :black,
-    alpha = 0.5,
- )
-
-
-
-#  plot!(t->4*10^B[1,j]*t^(B[2,j]),0,ts[99],
-#  label = "OLS estimate",
-#  linewidth = 2,
-# )
-# plot!(t->4*10^bB[1,j]*t^(bB[2,j]),0,ts[99],
-#  label = "GLS estimate",
-#  linewidth = 2,
-# )
-#savefig("simpleComp2.pdf")
