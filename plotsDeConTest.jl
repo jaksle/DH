@@ -138,7 +138,7 @@ end
 
 #heatmap(den.x,den.y,res')
 
-
+## long deconv
 resI = copy(res)
 j = findfirst(den.y .> 0.2)
 j2 = findlast(den.y .< 1.2)
@@ -188,13 +188,17 @@ resI[:,j2:end] .= res[:,j2:end]
 
 resI ./= (sum(resI)*step(den.x)*step(den.y))
 
-using JLD2
-#@save "deConT.jld2" den resI
-
-#@load "deConT.jld2" den resI
 ##
 
+
+using JLD2
 resO = res
+#@save "deConT.jld2" bB den resO resI
+
+#@load "deConT.jld2" den resI # PC dom
+##
+
+
 thDen = [( -1 <= x <= 1 && ( 0.4 <= y <= 0.6 || 0.8 <= y <= 1.0)) ? 1/(0.4*2) : 0. for x in den.x, y in den.y ]
 
 sum((thDen .- den.density) .^2)*step(den.x)*step(den.y)
@@ -221,16 +225,20 @@ denMarg3 .*= 1/(sum(denMarg3)*step(den.y))
 
 
 ## top row
+
+
+with_theme(theme_latexfonts()) do
+fig = Figure(size=(800,800),
+    fontsize = 16,
+)
+ga = fig[1, 1] = GridLayout()
+gb = fig[1, 2] = GridLayout()
+
 xlab = L"$D$ [L$^2$/T$^\alpha$]"
-ylab = L"{\alpha}\ [1]"
+ylab = L"{\alpha}"
 xtickL = [L"10^{-1}",L"10^{-0.5}","1",L"10^{0.5}",L"10^{1}"]
 xtick = (-1:0.5:1,xtickL)
 lsize = 18
-
-with_theme(theme_latexfonts()) do
-fig = Figure(size=(800,400))
-ga = fig[1, 1] = GridLayout()
-gb = fig[1, 2] = GridLayout()
 
 ax = Axis(ga[1,1],
     yticks = 0.2:0.2:1.4,
@@ -328,21 +336,17 @@ lines!(ax,denMarg,den.y,
 colsize!(gb, 1, Relative(4/5))
 colgap!(gb,10)
 
-save("deconI1.pdf",fig)
-fig
-end
 
-## bottom row
+# bottom row
 
 
 xlab = L"$D$ [L$^2$/T$^\alpha$]"
 xtickL = [L"10^{-1}",L"10^{-0.5}","1",L"10^{0.5}",L"10^{1}"]
 xtick = (-1:0.5:1,xtickL)
-ylab = L"{\alpha}\ [1]"
-with_theme(theme_latexfonts()) do
-fig = Figure(size=(800,400))
-ga = fig[1, 1] = GridLayout()
-gb = fig[1, 2] = GridLayout()
+ylab = L"{\alpha}"
+
+ga = fig[2, 1] = GridLayout()
+gb = fig[2, 2] = GridLayout()
 
 
 ax = Axis(ga[1,1],
@@ -361,7 +365,7 @@ heatmap!(ax,den.x,den.y,resO,
 )
 
 ax = Axis(ga[1,2],
-    limits = (0,3.5,0.2,1.2),
+    limits = (0,nothing,0.2,1.2),
     xticks = [1,2,3],
     yticklabelsvisible = false,
     xlabel = L"density $p_\alpha$",
@@ -402,7 +406,7 @@ heatmap!(ax,den.x,den.y,resI,
 )
 
 ax = Axis(gb[1,2],
-    limits = (0,3.1,0.2,1.2),
+    limits = (0,nothing,0.2,1.2),
     yticklabelsvisible = false,
     xlabel = L"density $p_\alpha$",
 )
@@ -425,7 +429,7 @@ lines!(ax,denMarg3,den.y,
 colsize!(gb, 1, Relative(4/5))
 colgap!(gb,10)
 
-save("deconI2.pdf",fig)
+save("deconTest.pdf",fig)
 fig
 end
 

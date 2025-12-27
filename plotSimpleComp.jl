@@ -5,7 +5,6 @@ using LinearAlgebra
 
 using CairoMakie
 
-##
 H0, D0 = 0.35, 10^-3 
 n = 10^4
 ln = 100
@@ -102,7 +101,7 @@ js0 = sortperm(ols)
 js = sortperm(abs.(ols .- gls))
 js2 = sortperm(abs.(ols) .- abs.(gls))
 #js3 = sortperm(abs.(ols) .- abs.(ols2))
-js4 = sortperm(ols2)
+#js4 = sortperm(ols2)
 ##
  # lap data long time
 
@@ -111,21 +110,23 @@ js4 = sortperm(ols2)
 #j = 779
 
 # Makie ver
+
 with_theme(theme_latexfonts()) do
 fig = Figure(size=1 .* (1200,400),
     fontsize = 22,
 )
+fs = 22
 xt = ([0.1,0.2,0.5,1,2,5], string.([0.1,0.2,0.5,1,2,5]) )
 yt = ([10^-3,2*10^-3,5*10^-3, 10^-2], [L"10^{-3}",L"2\!\cdot\! 10^{-3}",L"5\!\cdot\! 10^{-3}", L"10^{-2}"])
 
 j1, j2 = 9193, 6414 #2413 # 6414 553
 mm, M = 0.9min(msd[1,j1],msd[1,j2]), 1.1max(1.1maximum(msd[:,j1]), 1.1maximum(msd[:,j2]))
 j = j1 # 7530 #7213 
-fs = 16
+
 ax = Axis(fig[1,1],
     xlabel = L"$t$ [s]",
     ylabel = L"MSD [μm$^2$]",
-    ylabelpadding = 0,
+    ylabelpadding = 5,
     #title = "Trajectory with misleading short time TA-MSD",
     title = "Trajectory with misleading long time TA-MSD",
     xscale = log10,
@@ -200,7 +201,7 @@ Makie.scatter!(ax,ts[1:10],msd[1:10,j],
     marker = :circle,
     strokewidth = 1,
     #markersize = 3,
-    label = "points used for the estimation",
+    label = "OLS range",
 )
 lines!(ax,ts, 4D0*ts .^(2H0),
     label = "exact MSD",
@@ -209,7 +210,7 @@ lines!(ax,ts, 4D0*ts .^(2H0),
     linewidth = 2,
 )
 #axislegend(position = :lt)
-
+colgap!(fig.layout,40)
 
 save("simpleComp.pdf",fig)
 fig

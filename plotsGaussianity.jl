@@ -41,11 +41,11 @@ gls, covGLS = fit_gls(msd, d, dt, ols[2,:])
 (JarqueBeraTest(ols[1,:]).JB + JarqueBeraTest(ols[2,:]).JB)/10^5
 
 
-## JB gaussianity
+## JB gaussianity sim
 using JLD2
 
 
-function f()
+function sim()
 
 
     d = 2
@@ -111,7 +111,7 @@ function f()
     #@save "gaussianity.jld2" lns jbo jbos jbg jbgs # PC WMat
 end
 
-f()
+sim()
 ## 
 using JLD2
 @load "gaussianity.jld2" lns jbo jbos jbg jbgs # PC WMat
@@ -120,22 +120,23 @@ n = 10^5
 
 
 ##
-α, D = 0.8, 1
-d = 2
 
 
 with_theme(theme_latexfonts()) do
 
-fig = Figure(size=(800,400))
+fig = Figure(size=(1200,400),
+    fontsize = 22,
+)
 
 ax = Axis(fig[1,1],
     ylabel = "Jarque-Bera statistic",
     xlabel = "trajectory length",
     xticks = 25:25:200,
-    yticks = 0.0002:0.0002:0.0008,# [ "", "", "",L"10^{-4}\!\cdot\!8"]),
+    yticks = (0.0002:0.0002:0.0008, string.(2:2:8)),# [ "", "", "",L"10^{-4}\!\cdot\!8"]),
     limits = (20,205,nothing,nothing),
     title = L"\textbf{Non-Gaussianity of} $(\log_{10}\, \hat{D},\, \hat{\alpha})$"
 )
+text!(fig.scene,20,350,text = L"\times\!10^{-4}")
 scatter!(ax,lns,jbos,
     label = "OLS",
     color = :dodgerblue2, 
@@ -154,7 +155,7 @@ ax2 = Axis(fig[1,2],
     title = "Diffusivity errors in linear scale"
 )
 scatter!(ax2,10 .^ gls[1,1:1000], gls[2,1:1000],
-    label = "GLS estimated parameters",
+    label = "GLS",
     color = :tomato,
     alpha = 0.7,
     markersize = 5,
@@ -170,7 +171,7 @@ fy(t) = sqrt(5.99) * ( C[2,1]*cos(t)+ C[2,2]*sin(t) ) + mA
 
 ϕs = LinRange(0,2pi,200)
 lines!(ax2, 10 .^ fx.(ϕs), fy.(ϕs),
-    label = "error 95% confidence area",
+    label = "95% confidence region",
     linestyle = :dash,
     color = :black
 )
