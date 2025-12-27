@@ -37,7 +37,7 @@ include("plotsEllipsesSim2.jl")
 lw = 2
 
 with_theme(theme_latexfonts()) do
-fig = Figure(size = (1200,400),
+fig = Figure(size = (600,400),
     fontsize = 22,
 )
 ax1 = Axis(fig[1,1],

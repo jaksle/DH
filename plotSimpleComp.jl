@@ -112,8 +112,8 @@ js4 = sortperm(ols2)
 
 # Makie ver
 with_theme(theme_latexfonts()) do
-fig = Figure(size=1 .* (800,350),
-    fontsize = 14,
+fig = Figure(size=1 .* (1200,400),
+    fontsize = 22,
 )
 xt = ([0.1,0.2,0.5,1,2,5], string.([0.1,0.2,0.5,1,2,5]) )
 yt = ([10^-3,2*10^-3,5*10^-3, 10^-2], [L"10^{-3}",L"2\!\cdot\! 10^{-3}",L"5\!\cdot\! 10^{-3}", L"10^{-2}"])
@@ -156,9 +156,9 @@ Makie.scatter!(ax,ts[1:10],msd[1:10,j],
     marker = :circle,
     strokewidth = 1,
     #markersize = 3,
-    label = "points used for the OLS estimation",
+    label = "OLS range",
 )
-lines!(ts, 4D0*ts .^(2H0),
+lines!(ax,ts, 4D0*ts .^(2H0),
     label = "exact MSD",
     color = :black,
     linestyle = :dash,
@@ -202,7 +202,7 @@ Makie.scatter!(ax,ts[1:10],msd[1:10,j],
     #markersize = 3,
     label = "points used for the estimation",
 )
-lines!(ts, 4D0*ts .^(2H0),
+lines!(ax,ts, 4D0*ts .^(2H0),
     label = "exact MSD",
     color = :black,
     linestyle = :dash,
