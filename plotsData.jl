@@ -90,7 +90,7 @@ den2 = kde((bB[1,:],bB[2,:]); boundary=((-5,-0.5),(-0.3,1.7)),npoints=(500,500),
 
 xt = [0.1,0.2,0.5,1,2,5]
 yt = [10^-3, 5*10^-3, 10^-2, 5*10^-2, 10^-1,1]
-errVar = diag(errC[:,:,j])
+#errVar = diag(errC[:,:,j])
 
 ##
 
@@ -104,9 +104,9 @@ ax1 = Axis(fig[1,1],
     xticks = (log10.(xt), string.(xt)),
     yticks = (log10.(yt), [L"10^{-3}",L"5\!\cdot\! 10^{-3}", L"10^{-2}", L"5\!\cdot\! 10^{-2}", L"10^{-1}",L"10^0" ]),
 )
-k = 220
+k = 476 # 220
 j = findfirst(hs .>= B[2,k]/2)
-band!(ax1, lts, lmsd[:,k] .-bias[:,j] .- sqrt.(2errVar), lmsd[:,k] .-bias[:,j] .+ sqrt.(2errVar),
+band!(ax1, lts, lmsd[:,k] .-bias[:,j] .- sqrt.(2diag(errC[:,:,j])), lmsd[:,k] .-bias[:,j] .+ sqrt.(2diag(errC[:,:,j])),
     color = :grey,
     alpha = 0.5,
 )
@@ -143,7 +143,8 @@ ax2 = Axis(fig[1,2],
     xticks = (log10.(xt), string.(xt)),
     yticks = (log10.(yt), [L"10^{-3}",L"5\!\cdot\! 10^{-3}", L"10^{-2}", L"5\!\cdot\! 10^{-2}", L"10^{-1}",L"10^0" ]),
 )
-k =  476 # 220! 470! 98 550 880
+# 476 for showing difference
+k =  470 # 220! 470! 98 550 880
 j = findfirst(hs .>= B[2,k]/2)
 CairoMakie.scatter!(ax2,lts, lmsd[:,k],
     color = :white,
@@ -156,7 +157,7 @@ CairoMakie.scatter!(ax2,lts, lmsd[:,k] .-bias[:,j],
     markersize = 10,
     #strokewidth = 1,
 )
-band!(ax2, lts, lmsd[:,k] .-bias[:,j] .- sqrt.(2errVar), lmsd[:,k] .-bias[:,j] .+ sqrt.(2errVar),
+band!(ax2, lts, lmsd[:,k] .-bias[:,j] .- sqrt.(2diag(errC[:,:,j])), lmsd[:,k] .-bias[:,j] .+ sqrt.(2diag(errC[:,:,j])),
     color = :grey,
     alpha = 0.5,
 )
