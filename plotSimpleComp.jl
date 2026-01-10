@@ -109,7 +109,7 @@ js2 = sortperm(abs.(ols) .- abs.(gls))
 
 #j = 779
 
-# Makie ver
+## Makie ver
 
 with_theme(theme_latexfonts()) do
 fig = Figure(size=1 .* (1200,400),
@@ -128,7 +128,7 @@ ax = Axis(fig[1,1],
     ylabel = L"MSD [μm$^2$]",
     ylabelpadding = 5,
     #title = "Trajectory with misleading short time TA-MSD",
-    title = "Trajectory with misleading long time TA-MSD",
+    #title = "Trajectory with misleading long time TA-MSD",
     xscale = log10,
     yscale = log10,
     xticks = xt,
@@ -165,13 +165,13 @@ lines!(ax,ts, 4D0*ts .^(2H0),
     linestyle = :dash,
     linewidth = 2,
 )
-axislegend(position = :lt)
+#axislegend(position = :lt)
 j = j2 #7530
 ax = Axis(fig[1,2],
     xlabel = L"$t$ [s]",
     #ylabel = L"MSD [μm$^2$]",
     ylabelpadding = 0,
-    title = "Trajectory with misleading short time TA-MSD",
+    #title = "Trajectory with misleading short time TA-MSD",
     #title = "Trajectory with misleading long time TA-MSD",
     xscale = log10,
     yscale = log10,

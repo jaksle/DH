@@ -135,11 +135,17 @@ lines!(ax3, dGLS.density, dGLS.x,
     color = :tomato,
     linewidth = lw,
 )
+# axislegend(ax2,[
+#     MarkerElement(color = :dodgerblue2, marker=:circle, alpha = 0.6, markersize = 12),
+#     MarkerElement(color = :tomato, marker=:circle, alpha = 0.6, markersize = 12), ],["OLS","GLS"],
+#     position = (0.9,0.2),
+# )
 axislegend(ax2,[
-    MarkerElement(color = :dodgerblue2, marker=:circle, alpha = 0.6, markersize = 12),
-    MarkerElement(color = :tomato, marker=:circle, alpha = 0.6, markersize = 12), ],["OLS","GLS"],
+    PolyElement(color = :dodgerblue2),
+    PolyElement(color = :tomato), ],["OLS","GLS"],
     position = (0.9,0.2),
 )
+
 
 colsize!(fig.layout, 3, Relative(1/6))
 

@@ -75,11 +75,12 @@ pal = [:firebrick1,:purple1,:slateblue1,:dodgerblue]
        [LineElement(color=pal[4]),
         LineElement(color=pal[3]),
         LineElement(color=pal[2]),
-        LineElement(color=pal[1]),
-        LineElement(color=:black),
-        LineElement(linestyle = :dash),
-        LineElement(linestyle = :dot) ],
-        [L"\alpha=1.0", L"\alpha=0.8",L"\alpha=0.6",L"\alpha=0.4","simulated TA-MSD","MSD","approximation"],
+        LineElement(color=pal[1])],
+        #LineElement(color=:black),
+        #LineElement(linestyle = :dash),
+        #LineElement(linestyle = :dot) ],
+        #[L"\alpha=1.0", L"\alpha=0.8",L"\alpha=0.6",L"\alpha=0.4","simulated TA-MSD","MSD","approximation"],
+        [L"\alpha=1.0", L"\alpha=0.8",L"\alpha=0.6",L"\alpha=0.4"],
         position = :lt,
     )
     end
