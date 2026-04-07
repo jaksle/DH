@@ -9,13 +9,13 @@ function spectrum(ω,s, t, H, ζ) # ω > 0, m = 1, kBT = 1
 end
 
 function covGLS(s, t, H, ζ) # ω > 0, m = 1, kBT = 1
-    2quadgk(ω->spectrum(ω,s, t, H, ζ),0, Inf)[1]
+    quadgk(ω->spectrum(ω,s, t, H, ζ),0, Inf)[1]/π
 end
 
 ##
 
 ts = 1:100
-H, ζ = 0.6,  0.1
+H, ζ = 0.6,  0.5
 C = Symmetric([covGLS(s,t, H, ζ) for s in ts, t in ts])
 
 ##
