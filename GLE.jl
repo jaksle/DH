@@ -102,6 +102,7 @@ gls = Matrix{Float64}(undef, 2, n2)
 
 @showprogress for i in 1:n2
     h = 1 - ols[2,nt+i]/2
+    h = max(h,1/2); h = min(h,1.)
     z = sinpi(2h)/(pi*h*(1-2h)*(2-2h)) / (2*10^ols[1,nt+i])
     #h, z = H, ζ
     C = theorCovEff2(ln,(s,t) -> covGLE(s,t,h,z), l1, l2)
