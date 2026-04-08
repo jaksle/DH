@@ -84,7 +84,6 @@ end
 
 B[1,:] .-= log10(4)
 
-
 ## GLS fit
 w = 9 # window
 gB = Matrix{Float64}(undef, 2, n)

@@ -149,12 +149,12 @@ for _ in 1:100
 end
 
 
-## plot
+## plot GLS
 
 darkRed = colorant"#cc3434"
 
 with_theme(theme_latexfonts()) do
-    fig = Figure(size=(1200,800),figure_padding=(0,30,0,0),
+    fig = Figure(size=(1200,400),figure_padding=(0,30,0,0),
         fontsize = 22,
     )
     # GLS
@@ -163,8 +163,8 @@ with_theme(theme_latexfonts()) do
     xlab[end÷2+1] = L"10^{-3}"
     xname = L"$D$ [μm$^2$/s$^{\alpha}$]"
     ax = Axis(fig[1,1],
-        xticks = -3.4:0.2:-2.6,
-        xticklabelsvisible = false,
+        xticks = (-3.4:0.2:-2.6, xlab),
+        #xticklabelsvisible = false,
         limits = (-3.4,-2.6, 0.4,1),
         title = "Step 1: points and predicted errors",
         titlesize = 20,
@@ -202,10 +202,9 @@ with_theme(theme_latexfonts()) do
 
 
     ax2 = Axis(fig[1,2],
-        xticks = -3.4:0.2:-2.6,
-        xticklabelsvisible = false,
-        yticklabelsvisible = false,
-        #xlabel = xname,
+        xticks = (-3.4:0.2:-2.6, xlab),
+        #yticklabelsvisible = false,
+        xlabel = xname,
         limits = (-3.4,-2.6, 0.4,1),
         title = "Step 2: density estimate",
         titlesize = 20,
@@ -223,9 +222,8 @@ with_theme(theme_latexfonts()) do
 
     ax3 = Axis(fig[1,3],
         xticks = (-3.4:0.2:-2.6,xlab),
-        xticklabelsvisible = false,
-        yticklabelsvisible = false,
-        #xlabel = xname,
+        #yticklabelsvisible = false,
+        xlabel = xname,
         limits = (-3.4,-2.6, 0.4,1),
         title = "Step 3: deconvolution",
         titlesize = 20,
@@ -238,86 +236,104 @@ with_theme(theme_latexfonts()) do
         color=:black,
         markersize = 15,
     )
-
-    # OLS
-
-    ax = Axis(fig[2,1],
-        xticks = (-3.4:0.2:-2.6, xlab),
-        limits = (-3.4,-2.6, 0.4,1),
-        titlesize = 20,
-        xlabelsize= 20,
-        ylabelsize = 20,
-        xlabel = xname,
-        ylabel = L"OLS ${\alpha}$",
-        xgridvisible = false,
-        ygridvisible = false,
-    )
-    gls = Makie.scatter!(ax,B[1,:],B[2,:],
-        #markerstrokewidth=0,
-        markersize=6,
-        alpha = 0.15,
-        color = :dodgerblue2, #darkRed,
-        #label = "",
-
-    )
-    Makie.scatter!(ax, [log10(D0)],[2H0],
-        marker='⨉',
-        color=:black,
-        markersize = 15,
-    )
-
-    C2 = sqrt(eM2)
-    θs = LinRange(0,2pi,200)
-    xs =  @. C2[1,1]*fn(θs)+C2[1,2]*gn(θs) + log10(D0)
-    ys = @. C2[2,1]*fn(θs)+C2[2,2]*gn(θs)+ 2H0
-    conf = lines!(ax,xs,ys ,
-        linewidth = 1.5,
-        color = :black,
-        linestyle = :dash,
-        label = "",
-    )
-
-
-    ax2 = Axis(fig[2,2],
-        xticks = (-3.4:0.2:-2.6,xlab),
-        yticklabelsvisible = false,
-        xlabel = xname,
-        limits = (-3.4,-2.6, 0.4,1),
-        titlesize = 20,
-        xlabelsize= 20,
-        ylabelsize = 20,
-    )
-    Makie.heatmap!(ax2, den2.x,den2.y,den2.density,
-        colormap = :thermal,
-    )
-    Makie.scatter!(ax2, [log10(D0)],[2H0],
-        marker='⨉',
-        color=:black,
-        markersize = 15,
-    )
-
-    ax3 = Axis(fig[2,3],
-        xticks = (-3.4:0.2:-2.6,xlab),
-        yticklabelsvisible = false,
-        xlabel = xname,
-        limits = (-3.4,-2.6, 0.4,1),
-        titlesize = 20,
-        xlabelsize= 20,
-        ylabelsize = 20,
-    )
-    Makie.heatmap!(ax3, den2.x,den2.y,res2)
-    cross = Makie.scatter!(ax3, [log10(D0)],[2H0],
-        marker='⨉',
-        color=:black,
-        markersize = 15,
-    )
-
-    colgap!(fig.layout,50)
-    rowgap!(fig.layout,30)
-
-    # axislegend(ax,[MarkerElement(color = :tomato, marker=:circle, alpha = 0.6, markersize = 12),  conf, cross,],["GLS","error 95% ellipse",L"exact ($D, \alpha$)"],
-    #     position = :lt,
-    # )
+    #colgap!(fig.layout,50)
     save("decEx.pdf",fig)
     fig
 end
+
+
+## plot OLS
+
+darkRed = colorant"#cc3434"
+
+set_theme!(theme_latexfonts())
+
+xlab = [L"10^{%$i}" for i in -3.4:0.2:-2.6]
+xlab[end÷2+1] = L"10^{-3}"
+
+xname = L"$D$ [μm$^2$/s$^{\alpha}$]"
+fig = Figure(size=(1200,400),figure_padding=(0,30,0,0),
+    fontsize = 22,
+)
+ax = Axis(fig[1,1],
+    xticks = (-3.4:0.2:-2.6, xlab),
+    limits = (-3.4,-2.6, 0.4,1),
+    title = "Step 1: points and predicted errors",
+    titlesize = 20,
+    xlabelsize= 20,
+    ylabelsize = 20,
+    xlabel = xname,
+    ylabel = L"OLS ${\alpha}$",
+    xgridvisible = false,
+    ygridvisible = false,
+)
+gls = Makie.scatter!(ax,B[1,:],B[2,:],
+    #markerstrokewidth=0,
+    markersize=6,
+    alpha = 0.15,
+    color = :dodgerblue2, #darkRed,
+    label = "",
+
+)
+Makie.scatter!(ax, [log10(D0)],[2H0],
+    marker='⨉',
+    color=:black,
+    markersize = 15,
+)
+
+C2 = sqrt(eM2)
+θs = LinRange(0,2pi,200)
+xs =  @. C2[1,1]*fn(θs)+C2[1,2]*gn(θs) + log10(D0)
+ys = @. C2[2,1]*fn(θs)+C2[2,2]*gn(θs)+ 2H0
+conf = lines!(ax,xs,ys ,
+    linewidth = 1.5,
+    color = :black,
+    linestyle = :dash,
+    label = "",
+)
+
+
+ax2 = Axis(fig[1,2],
+    xticks = (-3.4:0.2:-2.6,xlab),
+    #yticklabelsvisible = false,
+    xlabel = xname,
+    limits = (-3.4,-2.6, 0.4,1),
+    title = "Step 2: density estimate",
+    titlesize = 20,
+    xlabelsize= 20,
+    ylabelsize = 20,
+)
+Makie.heatmap!(ax2, den2.x,den2.y,den2.density,
+    colormap = :thermal,
+)
+Makie.scatter!(ax2, [log10(D0)],[2H0],
+    marker='⨉',
+    color=:black,
+    markersize = 15,
+)
+
+ax3 = Axis(fig[1,3],
+    xticks = (-3.4:0.2:-2.6,xlab),
+    #yticklabelsvisible = false,
+    xlabel = xname,
+    limits = (-3.4,-2.6, 0.4,1),
+    titlesize = 20,
+    xlabelsize= 20,
+    ylabelsize = 20,
+    title = "Step 3: deconvolution",
+)
+Makie.heatmap!(ax3, den2.x,den2.y,res2)
+cross = Makie.scatter!(ax3, [log10(D0)],[2H0],
+    marker='⨉',
+    color=:black,
+    markersize = 15,
+)
+
+colgap!(fig.layout,50)
+rowgap!(fig.layout,30)
+
+# axislegend(ax,[MarkerElement(color = :tomato, marker=:circle, alpha = 0.6, markersize = 12),  conf, cross,],["GLS","error 95% ellipse",L"exact ($D, \alpha$)"],
+#     position = :lt,
+# )
+save("decEx2.pdf",fig)
+fig

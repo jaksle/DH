@@ -48,8 +48,7 @@ function theorCovEff(k,l,ln,K) # zakres h?
     return 2/((ln-k)*(ln-l)) *( sum(N1(h)*incrCov(1,h,k,l,K)^2 for h in 2:ln-l; init=0) + sum( N2(h)*incrCov(h,1,k,l,K)^2 for h in 1:ln-k ) )
 end
 
-function theorCovEff2(ln,K) # zakres h?
-    ln = length(ts)
+function theorCovEff2(ln,K, i1=1,i2=ln-1) # tablicuje wartości kowariancji
     C = Matrix{Float64}(undef, ln, ln)
     for i in 1:ln, j in i:ln
         C[i,j] = K(ts[i],ts[j])
@@ -60,7 +59,8 @@ function theorCovEff2(ln,K) # zakres h?
         C[a,b] + C[a+c,b+d] - C[a,b+d] - C[a+c,b]
     end
     M = Matrix{Float64}(undef,ln-1,ln-1)
-    for k1 in 1:ln-1, l1 in 1:ln-1
+    M .= NaN
+    for k1 in i1:i2, l1 in i1:i2
         k, l = k1, l1
         if k > l
             k, l = l, k
