@@ -353,7 +353,7 @@ ft = fit(Normal,Y)
 using KernelDensity,FFTW
 
 den = kde((bB[1,:],bB[2,:]))
-den = dA2
+
 
 heatmap(den.x,den.y,den.density')
 
@@ -382,7 +382,7 @@ heatmap(den.x,den.y,res')
 
 
 resI = copy(res)
-j = findfirst(den.y .> 0.15)
+j = findfirst(den.y .> 0.1)
 j2 = findlast(den.y .< 1.0)
 @showprogress for k in j:j2
     mA = den.y[k] 
@@ -399,7 +399,7 @@ j2 = findlast(den.y .< 1.0)
     zs = den.density
     ins = reverse(ns)
     res = copy(zs)
-    for _ in 1:100
+    for _ in 1:30
         d = real.(ifft( fft(res) .* fft(ns)))
         d[abs.(d) .< 10^-12] .= 10^-12
         res .*= real.(ifft( fft(zs ./ d) .* fft(ins)))
@@ -421,17 +421,35 @@ ns = circshift(ns,(length(den.x)÷2,length(den.y)÷2))
 zs = den.density
 ins = reverse(ns)
 res = copy(zs)
-for _ in 1:100
+for _ in 1:30
     d = real.(ifft( fft(res) .* fft(ns)))
     d[abs.(d) .< 10^-12] .= 10^-12
     res .*= real.(ifft( fft(zs ./ d) .* fft(ins)))
 end
 resI[:,j2:end] .= res[:,j2:end]
 
+##
 
-heatmap(den.x,den.y,resI')
+#linecolor = palette(:plasma)[100]
+#linecolor = palette(:viridis)[150],
 
 
+fig, ax, _ = heatmap(den.x,den.y,resI)
+
+
+
+mDen = vec(sum(den.density,dims=1))
+mDen ./= (sum(mDen) * step(den.y))
+fig, ax, _ = lines(den.y, mDen, color = :purple, label = "original")
+mRes = vec(sum(resI,dims=1))
+mRes ./= (sum(mRes) * step(den.y))
+lines!(ax, den.y, mRes, color = :teal, label = "deconvolved")
+ax.title = "Interpolated deconvolution"
+ax.xlabel = "α"
+ax.ylabel = "density"
+axislegend(ax)
+save("dataDeconForRev.pdf",fig)
+fig
 
 ## test better kde
 dA = kde((bB[1,:],bB[2,:]), boundary = ((-5,-1),(-0.2,1.7)),npoints=(256,256))

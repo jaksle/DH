@@ -75,7 +75,7 @@ fm2H = similar(vlD)
 
 fB = Matrix{Float64}(undef,2, n) 
 
-tB = (Ts[1:5,:]'*Ts[1:5,:])^-1*Ts[1:5,:]' * lmsd[1:5,:]
+tB = (Ts[1:10,:]'*Ts[1:10,:])^-1*Ts[1:10,:]' * lmsd[1:10,:]
 
 @showprogress for (k,m) in enumerate(lns)
     R = (Ts[1:m,:]'*Ts[1:m,:])^-1*Ts[1:m,:]'
@@ -88,7 +88,7 @@ tB = (Ts[1:5,:]'*Ts[1:5,:])^-1*Ts[1:5,:]' * lmsd[1:5,:]
     gB = gR * (lmsd[1:m,:] .- bias[1:m])
 
     for ii in 1:n
-        ht = m <= 5 ? B[2,ii]/2 : tB[2,ii]/2
+        ht = m <= 10 ? B[2,ii]/2 : tB[2,ii]/2
         j = findfirst(hs .>= ht)
         j === nothing && (j = length(hs))
         fR = ((Ts[1:m,:]'*errC[1:m,1:m,j]^-1*Ts[1:m,:])^-1*Ts[1:m,:]'*errC[1:m,1:m,j]^-1)
