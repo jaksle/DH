@@ -48,6 +48,35 @@ function theorCovEff(k,l,ln,K) # zakres h?
     return 2/((ln-k)*(ln-l)) *( sum(N1(h)*incrCov(1,h,k,l,K)^2 for h in 2:ln-l; init=0) + sum( N2(h)*incrCov(h,1,k,l,K)^2 for h in 1:ln-k ) )
 end
 
+function theorCovEff2(ln,K) # zakres h?
+    ln = length(ts)
+    C = Matrix{Float64}(undef, ln, ln)
+    for i in 1:ln, j in i:ln
+        C[i,j] = K(ts[i],ts[j])
+        C[j,i] = C[i,j]
+    end
+    incrCov2(i,j,k,l) = begin 
+        a, b, c, d = i, j, k, l
+        C[a,b] + C[a+c,b+d] - C[a,b+d] - C[a+c,b]
+    end
+    M = Matrix{Float64}(undef,ln-1,ln-1)
+    for k1 in 1:ln-1, l1 in 1:ln-1
+        k, l = k1, l1
+        if k > l
+            k, l = l, k
+        end
+        N1 = h-> ln-l-h+1
+        N2 = h-> 
+            if h <= l-k+1
+                ln-l
+            else
+                ln-k-h+1
+            end
+        M[k1,l1] = 2/((ln-k)*(ln-l)) *( sum(N1(h)*incrCov2(1,h,k,l)^2 for h in 2:ln-l; init=0) + sum( N2(h)*incrCov2(h,1,k,l)^2 for h in 1:ln-k ) )
+    end
+    return M
+end
+
 function crossCovEff(k,l,ln,K)
     if k > l
         k, l = l, k

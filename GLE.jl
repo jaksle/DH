@@ -19,8 +19,8 @@ end
 
 ln = 100
 dt = 0.0567
-ts = dt*(1:ln)
-H, ζ = 0.6,  10
+const ts = dt*(1:ln)
+H, ζ = 0.6,  100
 M = fill(NaN, ln, ln)
 for i in 1:ln, j in i:ln
     M[i,j] = covGLS(ts[i],ts[j], H, ζ)
@@ -31,8 +31,8 @@ C = Symmetric(M)
 ## plot
 fig = Figure()
 ax = Axis(fig[1,1],
-    #xscale = log10,
-    #yscale = log10,
+    xscale = log10,
+    yscale = log10,
 )
 
 scatter!(ax, 1:ln,diag(C))
@@ -63,7 +63,7 @@ lts = log10.(ts[1:ln-1])
 Ts = [ones(ln-1) lts]
 
 
-m, l = 30, 10
+m, l = 1, 10
 
 B = Matrix{Float64}(undef, 2, n)
 for i in 1:n
@@ -72,10 +72,23 @@ end
 
 B[1,:] .-= log10(4)
 
+## spr liczenia covEff
+using BenchmarkTools
+D = 1 #
+ln = 100
+dt = 0.0567
+const ts = dt*(1:ln)
+mA = 0.9 
+K = (s,t) -> D*(t^(mA)+s^(mA)-abs(s-t)^(mA))
+K = (s,t) -> covGLS(s,t,0.8,10) 
+T1 = theorCovEff2(ln,K)
+T2 = [theorCovEff(i,i2,ln,K) for i in 1:ln-1,i2 in 1:ln-1]
+
+
 ## GLS prep
 
 as = 0.1:0.02:1
-hs = reverse(@. 1 - as/2)
+hs = @. 1 - as/2
 errC = Array{Float64}(undef,ln-1,ln-1,length(hs))
 bias = Array{Float64}(undef,ln-1,length(hs))
 
