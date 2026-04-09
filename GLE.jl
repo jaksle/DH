@@ -20,7 +20,7 @@ end
 ln = 100
 dt = 0.0567
 const ts = dt*(1:ln)
-H, ζ = 0.6,  100
+H, ζ = 0.6,  20
 M = fill(NaN, ln, ln)
 for i in 1:ln, j in i:ln
     M[i,j] = covGLE(ts[i],ts[j], H, ζ)
@@ -32,8 +32,8 @@ E = Symmetric(M)
 ## plot
 fig = Figure()
 ax = Axis(fig[1,1],
-    xscale = log10,
-    yscale = log10,
+    #xscale = log10,
+    #yscale = log10,
 )
 
 scatter!(ax, 1:ln,diag(E))
@@ -99,10 +99,13 @@ n2 = 100
 nt = 0
 l1, l2 = 10, 99
 gls = Matrix{Float64}(undef, 2, n2)
-
-@showprogress for i in 1:n2
+mH = 1 - mean(ols[2,:])/2
+mZ = sinpi(2mH)/(pi*mH*(1-2mH)*(2-2mH)) / (2*10^mean(ols[1,:]))
+for i in 1:n2
     h = 1 - ols[2,nt+i]/2
-    h = max(h,1/2); h = min(h,1.)
+    if h < 1/2 || h > 1
+        h = mH
+    end 
     z = sinpi(2h)/(pi*h*(1-2h)*(2-2h)) / (2*10^ols[1,nt+i])
     #h, z = H, ζ
     C = theorCovEff2(ln,(s,t) -> covGLE(s,t,h,z), l1, l2)
@@ -132,12 +135,12 @@ ols2[1,:] .-= log10(4)
 
 ##
 
-k = 1
+k = 17
 l = 99
 fig = Figure()
 ax = Axis(fig[1,1],
-    #xscale = log10,
-    #yscale = log10,
+    xscale = log10,
+    yscale = log10,
 )
 
 
@@ -156,6 +159,15 @@ fig
 fig, ax, s =  scatter(ols[1,:], ols[2,:])
 
 scatter!(ax, gls[1,:], gls[2,:],
+    color = :tomato
+)
+fig
+
+##
+
+fig, ax, s =  scatter(1:100, ols[2,1:100])
+
+scatter!(1:100, gls[2,1:100],
     color = :tomato
 )
 fig
