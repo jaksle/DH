@@ -17,7 +17,7 @@ end
 
 ## covariance
 
-ln = 100
+ln = 200
 dt = 0.0567
 const ts = dt*(1:ln)
 H, ζ = 0.6,  20
@@ -95,13 +95,13 @@ T2 = [theorCovEff(i,i2,ln,K) for i in 1:ln-1,i2 in 1:ln-1]
 
 ## GLS 
 
-n2 = 100
+n2 = 10
 nt = 0
-l1, l2 = 10, 99
+l1, l2 = 10, 199
 gls = Matrix{Float64}(undef, 2, n2)
 mH = 1 - mean(ols[2,:])/2
 mZ = sinpi(2mH)/(pi*mH*(1-2mH)*(2-2mH)) / (2*10^mean(ols[1,:]))
-for i in 1:n2
+@showprogress for i in 1:n2
     h = 1 - ols[2,nt+i]/2
     if h < 1/2 || h > 1
         h = mH
@@ -156,7 +156,7 @@ fig
 
 ## plots gls vs ols
 
-fig, ax, s =  scatter(ols[1,:], ols[2,:])
+#fig, ax, s =  scatter(ols[1,:], ols[2,:])
 
 scatter!(ax, gls[1,:], gls[2,:],
     color = :tomato
