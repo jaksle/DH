@@ -2,6 +2,7 @@ using QuadGK, SpecialFunctions
 using ProgressMeter, BenchmarkTools
 using LinearAlgebra
 using CairoMakie
+using Base.Threads
 
 include("funs.jl")
 ##
@@ -32,8 +33,8 @@ E = Symmetric(M)
 ## plot
 fig = Figure()
 ax = Axis(fig[1,1],
-    #xscale = log10,
-    #yscale = log10,
+    xscale = log10,
+    yscale = log10,
 )
 
 scatter!(ax, 1:ln,diag(E))
@@ -107,6 +108,9 @@ mZ = sinpi(2mH)/(pi*mH*(1-2mH)*(2-2mH)) / (2*10^mean(ols[1,:]))
         h = mH
     end 
     z = sinpi(2h)/(pi*h*(1-2h)*(2-2h)) / (2*10^ols[1,nt+i])
+    if z < 0.1 || z > 100
+        z = mZ
+    end 
     #h, z = H, ζ
     C = theorCovEff2(ln,(s,t) -> covGLE(s,t,h,z), l1, l2)
     thMSD = covGLE.(ts,ts,h,z) # dim = 1
@@ -156,8 +160,8 @@ fig
 
 ## plots gls vs ols
 
-#fig, ax, s =  scatter(ols[1,:], ols[2,:])
-
+fig, ax, s =  scatter(ols[1,:], ols[2,:])
+ax.limits = (-3,0,-1,2.5)
 scatter!(ax, gls[1,:], gls[2,:],
     color = :tomato
 )
@@ -165,9 +169,14 @@ fig
 
 ##
 
-fig, ax, s =  scatter(1:100, ols[2,1:100])
+fig, ax, s =  scatter(1:100, ols[1,1:100])
 
-scatter!(1:100, gls[2,1:100],
+scatter!(1:100, gls[1,1:100],
     color = :tomato
 )
 fig
+
+## use JLD2
+
+# @load "simGLE" # PC WMat
+# @load "simGLE2"
