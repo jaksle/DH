@@ -115,31 +115,37 @@ heatmap(den.x,den.y,res)
 
 #resO = copy(res)
 ## interpolation
-nIter = 30
+nIter = 50
 
 mA = 0.2 #mean(bB[2,:])
 K = (s,t) -> 1*(t^(mA)+s^(mA)-abs(s-t)^(mA))
 Σ = [theorCovEff(i,i2,ln,K)/(K(ts[i],ts[i])*K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1] #1D
 eM = (Ts'*Σ^-1*Ts)^-1
-nn= MvNormal([den.x[end÷2], den.y[end÷2]], Symmetric(eM))
+nn = MvNormal([den.x[end÷2], den.y[end÷2]], Symmetric(eM))
 
 ns = [pdf(nn,[x,y]) for x in den.x, y in den.y]
 ns = circshift(ns,(length(den.x)÷2,length(den.y)÷2))
 
-
+resStored = Array{Float64}(undef,length(den.x), length(den.y), 5)
+kk = 1
 zs = den.density
 ins = reverse(ns)
 res = copy(zs)
-for _ in 1:nIter
+for k in 1:nIter
     d = real.(ifft( fft(res) .* fft(ns)))
     d[abs.(d) .< 10^-12] .= 10^-12
     res .*= real.(ifft( fft(zs ./ d) .* fft(ins)))
+    if mod(k,10) == 0
+        resStored[:,:,kk] .= res
+        kk += 1
+    end
 end
 
 #heatmap(den.x,den.y,res')
 
 ## long deconv
 resI = copy(res)
+resIStored = Array{Float64}(undef,length(den.x), length(den.y), 5)
 j = findfirst(den.y .> 0.2)
 j2 = findlast(den.y .< 1.2)
 @showprogress for k in j:j2
@@ -192,7 +198,7 @@ resI ./= (sum(resI)*step(den.x)*step(den.y))
 
 
 using JLD2
-resO = res
+#resO = res
 #@save "deConT.jld2" bB den resO resI
 
 #@load "deConT.jld2" den resI # PC dom
@@ -227,7 +233,8 @@ denMarg3 .*= 1/(sum(denMarg3)*step(den.y))
 ## top row
 
 
-with_theme(theme_latexfonts()) do
+set_theme!(theme_latexfonts())
+
 fig = Figure(size=(800,800),
     fontsize = 16,
 )
@@ -431,5 +438,5 @@ colgap!(gb,10)
 
 save("deconTest.pdf",fig)
 fig
-end
+
 
