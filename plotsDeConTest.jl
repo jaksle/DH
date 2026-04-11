@@ -80,12 +80,12 @@ bB[1,:] .-= log10(2)
 
 
 ## simple deconv
-nIter = 30
+nIter = 100
 
 den = kde((bB[1,:],bB[2,:]),boundary = ((-1.5,1.5),(0.2,1.3)),npoints=(512,512))
-heatmap(den.x,den.y,den.density')
+#heatmap(den.x,den.y,den.density')
 
-surface(den.x,den.y,den.density')
+#surface(den.x,den.y,den.density')
 
 D = 1 # mean(bB[1,:])
 mA = 0.7 #mean(bB[2,:])
@@ -98,40 +98,14 @@ ns = [pdf(nn,[x,y]) for x in den.x, y in den.y]
 ns = circshift(ns,(length(den.x)÷2,length(den.y)÷2))
 #heatmap(den.x,den.y,ns')
 
+
+resStored = Array{Float64}(undef,length(den.x), length(den.y), 10)
+kk = 1
 #dec = deconv(den.density,ns,-1)
 zs = den.density
 ins = reverse(ns)
 res = copy(zs)
-for _ in 1:100 #nIter
-    d = real.(ifft( fft(res) .* fft(ns)))
-    d[abs.(d) .< 10^-12] .= 10^-12
-    res .*= real.(ifft( fft(zs ./ d) .* fft(ins)))
-end
-
-heatmap(den.x,den.y,res)
-#surface(den.x,den.y,res)
-#marg = vec(sum(res,dims=1))
-#plot(marg)
-
-#resO = copy(res)
-## interpolation
-nIter = 50
-
-mA = 0.2 #mean(bB[2,:])
-K = (s,t) -> 1*(t^(mA)+s^(mA)-abs(s-t)^(mA))
-Σ = [theorCovEff(i,i2,ln,K)/(K(ts[i],ts[i])*K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1] #1D
-eM = (Ts'*Σ^-1*Ts)^-1
-nn = MvNormal([den.x[end÷2], den.y[end÷2]], Symmetric(eM))
-
-ns = [pdf(nn,[x,y]) for x in den.x, y in den.y]
-ns = circshift(ns,(length(den.x)÷2,length(den.y)÷2))
-
-resStored = Array{Float64}(undef,length(den.x), length(den.y), 5)
-kk = 1
-zs = den.density
-ins = reverse(ns)
-res = copy(zs)
-for k in 1:nIter
+@showprogress for k in 1:nIter
     d = real.(ifft( fft(res) .* fft(ns)))
     d[abs.(d) .< 10^-12] .= 10^-12
     res .*= real.(ifft( fft(zs ./ d) .* fft(ins)))
@@ -141,12 +115,23 @@ for k in 1:nIter
     end
 end
 
+##
+j = 3
+heatmap(den.x,den.y,resStored[:,:,j])
+#surface(den.x,den.y,res)
+#marg = vec(sum(res,dims=1))
+#plot(marg)
+
+#resO = copy(res)
+
+
+
 #heatmap(den.x,den.y,res')
 
-## long deconv
-resI = copy(res)
-resIStored = Array{Float64}(undef,length(den.x), length(den.y), 5)
-j = findfirst(den.y .> 0.2)
+## long deconv main part
+resIStored = Array{Float64}(undef,length(den.x), length(den.y), 10)
+
+j = findfirst(den.y .>= 0.2)
 j2 = findlast(den.y .< 1.2)
 @showprogress for k in j:j2
     mA = den.y[k] 
@@ -163,15 +148,19 @@ j2 = findlast(den.y .< 1.2)
     zs = den.density
     ins = reverse(ns)
     res = copy(zs)
-    for _ in 1:nIter
+    for i in 1:nIter
         d = real.(ifft( fft(res) .* fft(ns)))
         d[abs.(d) .< 10^-12] .= 10^-12
         res .*= real.(ifft( fft(zs ./ d) .* fft(ins)))
+        if mod(i,10) == 0
+            kk = i ÷ 10
+            resIStored[:,k,kk] .= res[:,k]
+        end
     end
-    resI[:,k] .= res[:,k]
+    
 end
 
-mA = 1.2 #mean(bB[2,:])
+mA = 1.2
 K = (s,t) -> 1*(t^(mA)+s^(mA)-abs(s-t)^(mA))
 Σ = [theorCovEff(i,i2,ln,K)/(K(ts[i],ts[i])*K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1]
 eM = (Ts'*Σ^-1*Ts)^-1
@@ -185,25 +174,31 @@ ns = circshift(ns,(length(den.x)÷2,length(den.y)÷2))
 zs = den.density
 ins = reverse(ns)
 res = copy(zs)
-for _ in 1:nIter
+kk = 1
+for i in 1:nIter
     d = real.(ifft( fft(res) .* fft(ns)))
     d[abs.(d) .< 10^-12] .= 10^-12
     res .*= real.(ifft( fft(zs ./ d) .* fft(ins)))
+    if mod(i,10) == 0
+        resIStored[:,j2:end,kk] .= res[:,j2:end]
+        resIStored[:,:,kk] ./= (sum(resIStored[:,:,kk])*step(den.x)*step(den.y))
+        kk += 1
+     end
 end
-resI[:,j2:end] .= res[:,j2:end]
 
-resI ./= (sum(resI)*step(den.x)*step(den.y))
+#using JLD2
+#@save "deconFull.jld2" B bB den resStored resIStored
 
-##
 
+## loading data
+using CairoMakie, LaTeXStrings
 
 using JLD2
-#resO = res
-#@save "deConT.jld2" bB den resO resI
 
-#@load "deConT.jld2" den resI # PC dom
-##
+@load "deconFull.jld2"
 
+resO = resStored[:,:,3]
+resI = resIStored[:,:,3]
 
 thDen = [( -1 <= x <= 1 && ( 0.4 <= y <= 0.6 || 0.8 <= y <= 1.0)) ? 1/(0.4*2) : 0. for x in den.x, y in den.y ]
 
@@ -230,16 +225,18 @@ denMarg3 = vec(sum(resI,dims=1))
 denMarg3 .*= 1/(sum(denMarg3)*step(den.y))
 
 
+########################## figure
 ## top row
 
 
 set_theme!(theme_latexfonts())
 
-fig = Figure(size=(800,800),
+fig = Figure(size=(1000,800),
     fontsize = 16,
 )
-ga = fig[1, 1] = GridLayout()
-gb = fig[1, 2] = GridLayout()
+ga = GridLayout(fig[1, 1])
+gb = GridLayout(fig[1, 2])
+gc = GridLayout(fig[1:2,3])
 
 xlab = L"$D$ [L$^2$/T$^\alpha$]"
 ylab = L"{\alpha}"
@@ -436,7 +433,22 @@ lines!(ax,denMarg3,den.y,
 colsize!(gb, 1, Relative(4/5))
 colgap!(gb,10)
 
-save("deconTest.pdf",fig)
+# side
+
+for (k,i) in enumerate([1,2,3,5,10])
+    ax = Axis(gc[k,1],
+        limits = (-1.2,1.2,0.2,1.2),
+        aspect = 1,
+    )
+    hidedecorations!(ax)
+    # save("deconTest.pdf",fig)
+    heatmap!(ax,den.x,den.y,resIStored[:,:,i],
+        #colormap = :thermal,
+    )
+end
+colsize!(fig.layout, 1, Relative(2/5))
+colsize!(fig.layout, 2, Relative(2/5))
+colsize!(fig.layout, 3, Relative(1/5))
 fig
 
 
