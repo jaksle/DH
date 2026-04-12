@@ -195,10 +195,10 @@ using CairoMakie, LaTeXStrings
 
 using JLD2
 
-@load "deconFull.jld2"
+#@load "deconFull.jld2"
 
-resO = resStored[:,:,3]
-resI = resIStored[:,:,3]
+resO = resStored[:,:,5]
+resI = resIStored[:,:,5]
 
 thDen = [( -1 <= x <= 1 && ( 0.4 <= y <= 0.6 || 0.8 <= y <= 1.0)) ? 1/(0.4*2) : 0. for x in den.x, y in den.y ]
 
@@ -366,6 +366,7 @@ ax.ylabelsize = lsize
 ax.titlesize = lsize
 heatmap!(ax,den.x,den.y,resO,
     #colormap = :thermal,
+    colorrange = (0,1.95),
 )
 
 ax = Axis(ga[1,2],
@@ -407,6 +408,7 @@ ax.ylabelsize = lsize
 ax.titlesize = lsize
 heatmap!(ax,den.x,den.y,resI,
     #colormap = :thermal,
+    colorrange = (0,1.95),
 )
 
 ax = Axis(gb[1,2],
@@ -444,11 +446,16 @@ for (k,i) in enumerate([1,2,3,5,10])
     # save("deconTest.pdf",fig)
     heatmap!(ax,den.x,den.y,resIStored[:,:,i],
         #colormap = :thermal,
+                colorrange = (0, 1.95),
     )
+    text!(ax,0., 1.2, text = L"i = %$(i)0", color = :white, align = (:center,:top),fontsize = 20)
 end
-colsize!(fig.layout, 1, Relative(2/5))
-colsize!(fig.layout, 2, Relative(2/5))
-colsize!(fig.layout, 3, Relative(1/5))
+rowgap!(gc,7)
+colsize!(fig.layout, 1, Relative(42/100))
+colsize!(fig.layout, 2, Relative(42/100))
+colsize!(fig.layout, 3, Relative(16/100))
+
+#save("deconTest.pdf",fig)
 fig
 
 
