@@ -179,75 +179,86 @@ plot(p1,p2,p3,layout = l,size=(1200,300))
 
 using CairoMakie
 
-with_theme(theme_latexfonts()) do
-    fig = Figure(size = (1200, 400))
-    ga = fig[1, 1] = GridLayout()
-    gb = fig[1, 2] = GridLayout()
-    gc = fig[1, 3] = GridLayout()
-    ax = Axis(ga[1,1])
-    hm = CairoMakie.heatmap!(ax,2hs,2hs,Res1*10^3,
-        colormap = :thermal,
-        colorrange  = (3.8,4.7),
-    )
-    #fig.fontsize = 12
-    ax.title = L"var($\log_{10}\,\hat{D}$)"
-    ax.titlesize = 20
-    ax.xlabel = L"true $\alpha$"
-    ax.ylabel = L"GLS input $\alpha$"
-    ax.ylabelsize= 20
-    ax.xticks = 0.4:0.2:1.2
-    ax.yticks = 0.4:0.2:1.2
-    ax.xlabelsize= 20
-    Colorbar(ga[:, end+1],hm,
-        ticks = 3.8:0.1:4.7,
-        ) 
-    colsize!(ga, 1, Aspect(1, 1.0))
-    Label(ga[1, 2, Top()], L"\cdot 10^{-3}",
-        fontsize = 16,
-        halign = :left,
-    )
-    #text!(fig,0.,0.,L"\cdot 10^{-3}")
-
-    ax2 = Axis(gb[1,1])
-    hm2 = CairoMakie.heatmap!(ax2,2hs,2hs,Res2'*10^3,
-        colormap = :thermal,
-        colorrange  = (10,28),
-    )
-    ax2.title = L"var($\log_{10}\,\hat{\alpha}$)"
-    ax2.titlesize = 20
-    ax2.xlabel = L"true $\alpha$"
-    ax2.xticks = 0.4:0.2:1.2
-    ax2.yticks = 0.4:0.2:1.2
-    ax2.xlabelsize= 20
-    Colorbar(gb[:, end+1],hm2,
-        ticks = 10:2:28,
+set_theme!(theme_latexfonts()) 
+fsize = 18
+r = 0.7
+fig = Figure(size = (r*1200, r*430))
+ga = fig[1, 1] = GridLayout()
+gb = fig[1, 2] = GridLayout()
+gc = fig[1, 3] = GridLayout()
+ax = Axis(ga[1,1])
+hm = CairoMakie.heatmap!(ax,2hs,2hs,Res1*10^3,
+    colormap = :thermal,
+    colorrange  = (3.8,4.7),
+)
+#fig.fontsize = 12
+ax.title = L"var($\log_{10}\,\hat{D}$)"
+ax.titlesize = fsize
+ax.xlabel = L"true $\alpha$"
+ax.ylabel = L"GLS input $\alpha$"
+ax.ylabelsize= fsize
+ax.xticks = 0.4:0.2:1.2
+ax.yticks = 0.4:0.2:1.2
+ax.xlabelsize= fsize
+Colorbar(ga[:, end+1],hm,
+    ticks = 3.8:0.1:4.7,
     ) 
-    colsize!(gb, 1, Aspect(1, 1.0))
-    Label(gb[1, 2, Top()], L"\ \ \ \cdot 10^{-3}",
-        fontsize = 16,
-        halign = :left,
-    )
-    ax3 = Axis(gc[1,1])
-    hm3 = CairoMakie.heatmap!(ax3,2hs,2hs,Res3 ./ sqrt.(Res2 .* Res1),
-        colormap = :turbo,
-        #colorrange  = (3.8,4.7),
-    )
-    CairoMakie.contour!(ax3,2hs,2hs,Res3,levels=[0.0],
-        linestyle = :dash,
-        color = :white,
-        linewidth = 2,
-    )
-    ax3.title = L"corr($\log_{10}\,\hat{D},\ \hat{\alpha}$)"
-    ax3.titlesize = 20
-    ax3.xlabel = L"true $\alpha$"
-    ax3.xlabelsize= 20
-    ax3.yticks = 0.4:0.2:1.2
-    ax3.xticks = 0.4:0.2:1.2
-    Colorbar(gc[:, end+1],hm3,
-        ticks = (-0.4:0.1:0.2,vcat(string.(-0.4:0.1:-0.1), " 0.0", " 0.1", " 0.2")),
-    )
-    colsize!(gc, 1, Aspect(1, 1.0))
-    fig
-    save("inputHeat.pdf",fig)
-end
+colsize!(ga, 1, Aspect(1, 1.0))
+Label(ga[1, 2, Top()], L"\cdot 10^{-3}",
+    fontsize = 16,
+    halign = :left,
+)
+#text!(fig,0.,0.,L"\cdot 10^{-3}")
+
+ax2 = Axis(gb[1,1])
+hm2 = CairoMakie.heatmap!(ax2,2hs,2hs,Res2'*10^3,
+    colormap = :thermal,
+    colorrange  = (10,28),
+)
+ax2.title = L"var($\hat{\alpha}$)"
+ax2.titlesize = fsize
+ax2.xlabel = L"true $\alpha$"
+ax2.xticks = 0.4:0.2:1.2
+ax2.yticks = 0.4:0.2:1.2
+ax2.yticklabelsvisible = false
+ax2.xlabelsize= fsize
+Colorbar(gb[:, end+1],hm2,
+    ticks = 10:2:28,
+) 
+colsize!(gb, 1, Aspect(1, 1.0))
+Label(gb[1, 2, Top()], L"\ \ \ \cdot 10^{-3}",
+    fontsize = 16,
+    halign = :left,
+)
+ax3 = Axis(gc[1,1])
+hm3 = CairoMakie.heatmap!(ax3,2hs,2hs,Res3 ./ sqrt.(Res2 .* Res1),
+    colormap = :turbo,
+    #colorrange  = (3.8,4.7),
+)
+CairoMakie.contour!(ax3,2hs,2hs,Res3,levels=[0.0],
+    linestyle = :dash,
+    color = :white,
+    linewidth = 2,
+)
+ax3.title = L"corr($\log_{10}\,\hat{D},\ \hat{\alpha}$)"
+ax3.titlesize = fsize
+ax3.xlabel = L"true $\alpha$"
+ax3.xlabelsize= fsize
+ax3.yticks = 0.4:0.2:1.2
+ax3.yticklabelsvisible = false
+ax3.xticks = 0.4:0.2:1.2
+Colorbar(gc[:, end+1],hm3,
+    ticks = (-0.4:0.1:0.2,vcat(string.(-0.4:0.1:-0.1), " 0.0", " 0.1", " 0.2")),
+)
+colsize!(gc, 1, Aspect(1, 1.0))
+
+cg = 5
+colgap!(ga,cg)
+colgap!(gb,cg)
+colgap!(gc,cg)
+colgap!(fig.layout,5)
+fig
+
+save("inputHeat.pdf",fig)
+
 
