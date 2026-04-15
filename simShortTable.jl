@@ -1,5 +1,5 @@
 
-using Makie, ProgressMeter, LaTeXStrings
+using CairoMakie, ProgressMeter, LaTeXStrings
 using Statistics, Distributions, LinearAlgebra
 
 include("funs.jl")
@@ -154,10 +154,12 @@ end
 
 using CairoMakie
 
-with_theme(theme_latexfonts()) do
-fig = Figure(size =(1200,400))
+r = 0.8
+set_theme!(theme_latexfonts())
+fig = Figure(size =(r*1200,r*400))
 ax1 = Axis(fig[1,1],
     ylabel = L"estimated $\alpha$",
+    ylabelpadding = 0,
     xlabel = L"sample $\alpha$",
     xticks = (1:1:12, string.(2simH[1:1:12])),
     limits= (0,13,-0.5,2.0),
@@ -192,9 +194,15 @@ exact = CairoMakie.scatter!(ax1, 1:1:12, 2simH[1:1:12],
 )
 
 #fig
-axislegend(ax1,[PolyElement(color = :dodgerblue2,strokewidth=0), PolyElement(color = :tomato,strokewidth=0),exact, LineElement(color=:black,linewidth=0.5)],
+dx = 0.2
+axislegend(ax1,[
+    PolyElement(color = :dodgerblue2,strokewidth=0, points = Point2f[(dx, dx), (1-dx, dx), (1-dx,1-dx), (dx, 1-dx),]),
+    PolyElement(color = :tomato,strokewidth=0, points = Point2f[(dx, dx), (1-dx, dx), (1-dx,1-dx), (dx, 1-dx),]),
+    exact,
+    LineElement(color=:black,linewidth=0.5)],
     ["OLS", "GLS", "exact value","median"],
-    position = :rb
+    position = :rb,
+    rowgap = -5,
 )
 
 ylab = [L"10^{%$i}" for i in -1.5:0.5:1.5]
@@ -242,26 +250,10 @@ ax2.xlabelsize = 20
 ax2.ylabelsize = 20
 ax2.titlesize = 20
 
-save("violin.pdf",fig)
+colgap!(fig.layout,10)
+
+#save("violin.pdf",fig)
 fig
-end
 
-
-## box plot
-
-fig = Figure()
-ax = Axis(fig[1,1],
-    ylabel = L"estimated $\alpha$",
-    xlabel = L"sample $\alpha$",
-    limits= (0,13,-1,3),
-)
-for k in 1:2:12
-    Makie.boxplot!(ax,k*ones(n),ols[2,:,k],
-        color = :dodgerblue2,
-    )
-    Makie.boxplot!(ax,k*ones(n) .+ 1,gls[2,:,k],
-    color = :tomato
-    )
-end
 
 

@@ -179,11 +179,13 @@ plot(p1,p2,p3,layout = l,size=(1200,300))
 
 using CairoMakie
 
-set_theme!(theme_latexfonts())
-fig = Figure(size = (1200, 400))
-ga = GridLayout(fig[1, 1])
-gb = GridLayout(fig[1, 2])
-gc = GridLayout(fig[1, 3])
+set_theme!(theme_latexfonts()) 
+fsize = 18
+r = 0.7
+fig = Figure(size = (r*1200, r*430))
+ga = fig[1, 1] = GridLayout()
+gb = fig[1, 2] = GridLayout()
+gc = fig[1, 3] = GridLayout()
 ax = Axis(ga[1,1])
 hm = CairoMakie.heatmap!(ax,2hs,2hs,Res1*10^3,
     colormap = :thermal,
@@ -191,13 +193,13 @@ hm = CairoMakie.heatmap!(ax,2hs,2hs,Res1*10^3,
 )
 #fig.fontsize = 12
 ax.title = L"var($\log_{10}\,\hat{D}$)"
-ax.titlesize = 20
+ax.titlesize = fsize
 ax.xlabel = L"true $\alpha$"
 ax.ylabel = L"GLS input $\alpha$"
-ax.ylabelsize= 20
+ax.ylabelsize= fsize
 ax.xticks = 0.4:0.2:1.2
 ax.yticks = 0.4:0.2:1.2
-ax.xlabelsize= 20
+ax.xlabelsize= fsize
 Colorbar(ga[:, end+1],hm,
     ticks = 3.8:0.1:4.7,
     ) 
@@ -214,11 +216,12 @@ hm2 = CairoMakie.heatmap!(ax2,2hs,2hs,Res2'*10^3,
     colorrange  = (10,28),
 )
 ax2.title = L"var($\hat{\alpha}$)"
-ax2.titlesize = 20
+ax2.titlesize = fsize
 ax2.xlabel = L"true $\alpha$"
 ax2.xticks = 0.4:0.2:1.2
 ax2.yticks = 0.4:0.2:1.2
-ax2.xlabelsize= 20
+ax2.yticklabelsvisible = false
+ax2.xlabelsize= fsize
 Colorbar(gb[:, end+1],hm2,
     ticks = 10:2:28,
 ) 
@@ -238,18 +241,24 @@ CairoMakie.contour!(ax3,2hs,2hs,Res3,levels=[0.0],
     linewidth = 2,
 )
 ax3.title = L"corr($\log_{10}\,\hat{D},\ \hat{\alpha}$)"
-ax3.titlesize = 20
+ax3.titlesize = fsize
 ax3.xlabel = L"true $\alpha$"
-ax3.xlabelsize= 20
+ax3.xlabelsize= fsize
 ax3.yticks = 0.4:0.2:1.2
+ax3.yticklabelsvisible = false
 ax3.xticks = 0.4:0.2:1.2
 Colorbar(gc[:, end+1],hm3,
     ticks = (-0.4:0.1:0.2,vcat(string.(-0.4:0.1:-0.1), " 0.0", " 0.1", " 0.2")),
 )
 colsize!(gc, 1, Aspect(1, 1.0))
 
-
-#save("inputHeat.pdf",fig)
-
-
+cg = 5
+colgap!(ga,cg)
+colgap!(gb,cg)
+colgap!(gc,cg)
+colgap!(fig.layout,5)
 fig
+
+save("inputHeat.pdf",fig)
+
+
