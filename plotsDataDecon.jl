@@ -37,7 +37,7 @@ end
 
 ## margins
 
-resPlot =res
+resPlot = resI
 # porównanie gęstości brzegowych
 resPlot ./= (sum(resPlot)*step(den.x)*step(den.y))
 denMarg = vec(sum(den.density,dims=1))
