@@ -34,24 +34,30 @@ for _ in 1:30
 end
 
 
+
+## margins
+
+resPlot =res
 # porównanie gęstości brzegowych
-res ./= (sum(res)*step(den.x)*step(den.y))
+resPlot ./= (sum(resPlot)*step(den.x)*step(den.y))
 denMarg = vec(sum(den.density,dims=1))
 denMarg .*= 1/(sum(denMarg)*step(den.y))
-denMarg2 = vec(sum(res,dims=1))
+denMarg2 = vec(sum(resPlot,dims=1))
 denMarg2 .*= 1/(sum(denMarg2)*step(den.y))
 
 ##
+
+set_theme!(theme_latexfonts())
 fig = Figure(size = (900,400),
     fontsize = 22,
 )
 ax1 = Axis(fig[1,1],
     xlabel = L"$D$ [μm$^2$/s$^{\alpha}$]",
     ylabel = L"$α$",
-    limits = (-3.4, -2.6, -0.1,1.5),
-    xticks = [-3.3,-3.0,-2.7],
+    limits = (-5,-1, -0.1,1.2),
+    xticks = [-4,-3,-2],
     yticks = 0:0.3:1.5,
-    xtickformat = xs -> [L"10^{%$x}" for x in xs],
+    xtickformat = xs -> [L"10^{%$(Int(x))}" for x in xs],
     yminorgridvisible = true,
     yminorticks = IntervalsBetween(3),
     #label = "OLS"
@@ -59,11 +65,11 @@ ax1 = Axis(fig[1,1],
 
 ax2 = Axis(fig[1,2],
     xlabel = L"$D$ [μm$^2$/s$^{\alpha}$]",
-    limits = (-3.4, -2.6, -0.1,1.5),
+    limits = (-5,-1, -0.1,1.2),
     yticklabelsvisible = false,
     yticks = 0:0.3:1.5,
-    xticks = [-3.3,-3.0,-2.7],
-    xtickformat = xs -> [L"10^{%$x}" for x in xs],
+    xticks = [-4,-3,-2],
+    xtickformat = xs -> [L"10^{%$(Int(x))}" for x in xs],
     yminorgridvisible = true,
     yminorticks = IntervalsBetween(3),
     #ylabel = L"$α$",
@@ -81,19 +87,26 @@ ax3 = Axis(fig[1,3],
     #label = "GLS"
 )
 
-heatmap!(ax1,den.x,den.y,den.density,
+heatmap!(ax1,den.x,den.y,den.density, colormap = :magma,
+    colorscale = sqrt,
 )
 hlines!(ax1,[0],linestyle=:dash,color=:white)
 
-heatmap!(ax2, den.x,den.y,res,
+heatmap!(ax2, den.x,den.y,resPlot,
+    colorscale = sqrt,
 )
 hlines!(ax2,[0],linestyle=:dash,color=:white)
 
-lines!(ax3,den.y,denMarg,
+lines!(ax3,denMarg,den.y, color = :purple,label = "original",
 )
-lines!(ax3,den.y,denMarg2,
+lines!(ax3,denMarg2,den.y, color = :teal, label = "deconvolved",
 )
 hlines!(ax3,[0],linestyle=:dash,color=:black)
+axislegend(ax3)
+colsize!(fig.layout, 3,Relative(0.22))
+#save("dataDecon.pdf",fig)
+fig
+
 ##
 
 
@@ -262,89 +275,6 @@ plot!(t->√2/2*(f(t)+g(t)) +0.31,t->√2/2*(-f(t)+g(t)),0,2pi,
 
 
 ##
-Σ = 0.5*[1. 0.9;0.9 1.]
-d = MvNormal(Σ)
-ns = [pdf(d,[x,y]) for x in xs, y in xs]
-ns = circshift(ns,(100,100))
-
-p(x,y) = pdf(Gamma(2,1),x+1)*pdf(Normal(0,1),y)
-
-zs = p.(xs',xs)
-heatmap(zs)
-
-ws = conv(zs,ns)
-
-ys = deconv(ws,ns,100)
-heatmap(ys)
-
-## plots
-
-p1 = Plots.heatmap(xs,xs,zs,
-    fontfamily = "Computer Modern",
-    axisratio = 1,
-    xlim= (-2,5),
-    ylim= (-3,3),
-    cbar = :none,
-    title = "original density",
-    #xlabel = L"x",
-    #ylabel = L"y",
-)
-contour!(xs,xs,zs, linecolor=:white,linewidth=0.5)
-savefig("denOrg.pdf")
-
-p2 = heatmap(xs,xs,ws,
-    fontfamily = "Computer Modern",
-    axisratio = 1,
-    xlim= (-2,5),
-    ylim= (-3,3),
-    cbar = :none,
-    title = "blurred density",
-    #xlabel = L"x",
-    #ylabel = L"y",
-)
-contour!(xs,xs,ws, linecolor=:white,linewidth=0.5)
-
-savefig("denBlur.pdf")
-
-p3 = heatmap(xs,xs,ys,
-    fontfamily = "Computer Modern",
-    axisratio = 1,
-    xlim= (-2,5),
-    ylim= (-3,3),
-    cbar = :none,
-    title = "reconstructed density",
-    #xlabel = L"x",
-    #ylabel = L"y",
-)
-contour!(xs,xs,ys, linecolor=:white,linewidth=0.5)
-savefig("denRecon.pdf")
-
-#plot([p1, p2, p3]...,layout = (1,3))
-
-
-## k den test
-using KernelDensity
-n = 10^4
-X, Y = randn(n),randn(n)
-
-den = kde((X,Y))
-pd = pdf(den)
-heatmap(den.x,den.y,den.density)
-
-den2 = deconv(den.density,ns,100)
-
-heatmap(den2)
-
-
-## parametric conv
-
-X = randn(10^3) .+ 1
-Y = X .+ .√abs.(X) .* randn(10^3)
-
-ft = fit(Normal,Y)
-
-
-
 
 
 ##################################
@@ -354,11 +284,12 @@ using KernelDensity,FFTW
 
 den = kde((bB[1,:],bB[2,:]))
 
+nIter = 100
 
 heatmap(den.x,den.y,den.density')
 
 # init run
-mA = 0.15 #mean(bB[2,:])
+mA = 0.1
 K = (s,t) -> 1*(t^(mA)+s^(mA)-abs(s-t)^(mA))
 Σ = [2theorCovEff(i,i2,ln,K)/(2K(ts[i],ts[i])*2K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1]
 eM = (Ts'*Σ^-1*Ts)^-1
@@ -372,13 +303,13 @@ ns = circshift(ns,(length(den.x)÷2,length(den.y)÷2))
 zs = den.density
 ins = reverse(ns)
 res = copy(zs)
-for _ in 1:100
+for _ in 1:nIter
     d = real.(ifft( fft(res) .* fft(ns)))
     d[abs.(d) .< 10^-12] .= 10^-12
     res .*= real.(ifft( fft(zs ./ d) .* fft(ins)))
 end
 
-heatmap(den.x,den.y,res')
+#heatmap(den.x,den.y,res')
 
 
 resI = copy(res)
@@ -399,7 +330,7 @@ j2 = findlast(den.y .< 1.0)
     zs = den.density
     ins = reverse(ns)
     res = copy(zs)
-    for _ in 1:30
+    for _ in 1:nIter
         d = real.(ifft( fft(res) .* fft(ns)))
         d[abs.(d) .< 10^-12] .= 10^-12
         res .*= real.(ifft( fft(zs ./ d) .* fft(ins)))
@@ -421,7 +352,7 @@ ns = circshift(ns,(length(den.x)÷2,length(den.y)÷2))
 zs = den.density
 ins = reverse(ns)
 res = copy(zs)
-for _ in 1:30
+for _ in 1:nIter
     d = real.(ifft( fft(res) .* fft(ns)))
     d[abs.(d) .< 10^-12] .= 10^-12
     res .*= real.(ifft( fft(zs ./ d) .* fft(ins)))
