@@ -78,7 +78,7 @@ ax2 = Axis(fig[1,2],
 
 ax3 = Axis(fig[1,3],
     xlabel = L"density $p{}_\alpha$",
-    limits = (0, nothing, -0.1,1.5),
+    limits = (0, nothing, -0.1,1.2),
     yticks = 0:0.3:1.5,
     yticklabelsvisible = false,
     yminorgridvisible = true,
