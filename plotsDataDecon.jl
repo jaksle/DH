@@ -4,7 +4,7 @@ using KernelDensity
 
 ## data deConv
 
-
+##
 
 lds = LinRange(-5,-0.5,500)
 as = LinRange(-0.1,1.7,500)
@@ -37,7 +37,7 @@ end
 
 ## margins
 
-resPlot =res
+resPlot = resI
 # porównanie gęstości brzegowych
 resPlot ./= (sum(resPlot)*step(den.x)*step(den.y))
 denMarg = vec(sum(den.density,dims=1))
@@ -88,12 +88,12 @@ ax3 = Axis(fig[1,3],
 )
 
 heatmap!(ax1,den.x,den.y,den.density, colormap = :magma,
-    colorscale = sqrt,
+    #colorscale = sqrt,
 )
 hlines!(ax1,[0],linestyle=:dash,color=:white)
 
 heatmap!(ax2, den.x,den.y,resPlot,
-    colorscale = sqrt,
+    #colorscale = sqrt,
 )
 hlines!(ax2,[0],linestyle=:dash,color=:white)
 
@@ -157,127 +157,17 @@ Plots.hline!([0],linestyle=:dash,color=:white,
     label = "",
 )
 
-#savefig("kdeDeconv.pdf")
 
-## joint plot
+##################################
 
+# kde variances 
 
+bn = KernelDensity.default_bandwidth((bB[1,:],bB[2,:]))
 
-
-#plotly()
-#surface(den.x,den.y,den.density')
-#surface(den.x,den.y,res')
-
-
-
-
-
-
-p3 = Plots.plot(den.y,denMarg,
-    fontfamily = "Computer Modern",
-    label = "original density",
-    ylabel = L"density $p{}_\alpha$",
-    linecolor = palette(:plasma)[100],
-    #xlabel = "α",
-    titlefont= 12,
-    xguidefontsize = 10,
-    yguidefontsize = 10,
-    permute = (:x,:y),
-    xlim = (-0.1,1.4),
-    ylim = (0,3.1),
-    linewidth = 1.5,
-    xticks = [-0.1,0,0.2,0.4,0.6,0.8,1,1.2,1.4],
-)
-Plots.plot!(den.y,denMarg2,
-    label = "deconvolved density",
-    permute = (:x,:y),
-    linewidth = 1,
-    linecolor = palette(:viridis)[150],
-)
-Plots.hline!([0],linestyle=:dash,color=:black,alpha= 0.5,
-    label = "",
-)
-
-#savefig("deconvMarg.pdf")
-
-l = @layout [a{0.4w} b{0.4w} c{0.2w}]
-#plot!(p1,legend=(0.5,0.3))
-#plot!(p2,legend=(0.5,0.3))
-#plot!(p3,legend=(0.5,0.3))
-Plots.plot(p1,p2,p3,layout = l,
-    titlefont= 12,
-    xguidefontsize = 10,
-    yguidefontsize = 10,
-    size = (800,400),
-)
-
-savefig("kdeComp.pdf")
-
-
-
-## 1D conv ex
-
-xs = LinRange(-5,5,200)
-ys = @. exp(-xs^2)
-ns = circshift(ys,100)
-ns ./= sum( ns )
-
-zs = real.(ifft(fft(ys) .* fft(ns)))
-
-plot(ys)
-plot!(zs)
-
-## 2D conv
-
-xs = LinRange(-5,5,200)
-im = @. max(abs(xs),abs(xs')) <= 1
-ys = @. exp( -0.5*(xs-xs')^2 - (xs+xs')^2)
-ns = circshift(ys,(100,100))
-ns ./= sum(ns)
-
-zs = real.(ifft(fft(im) .* fft(ns)))
-
-heatmap(zs', 
-    axisratio=1,
-    xlim=(1,200),
-)
-
-#
-
-## singular case ex
-
-ws = real.(ifft(fft(ys) .* fft(ns)))
-
-ins = reverse(circshift(ws,(100,100)))
-
-res = copy(ys)
-
-for _ in 1:100
-    den = real.(ifft( fft(res) .* fft(ins)))
-    res .*= real.(ifft( fft(ys ./ den) .* fft(ins)))
-end
-
-## ellipse
-
-C =Σ^-1
-A, B = 2C[1,1]-2C[1,2],2C[1,1]+2C[1,2] # tylko dla równych wariancji
-f(t) = cos(t)/sqrt(A/5.99) # 95% elipse
-g(t) = sin(t)/sqrt(B/5.99)
-
-
-
-plot!(t->√2/2*(f(t)+g(t)) +0.31,t->√2/2*(-f(t)+g(t)),0,2pi,
-    linewidth = 2,
-    color = :black,
-    linestyle = :dash,
-    label = "noise 95% ellipse",
-)
+dst = KernelDensity.kernel_dist(Normal,bn)
 
 
 ##
-
-
-##################################
 
 ## interpolation
 using KernelDensity,FFTW
@@ -286,12 +176,13 @@ den = kde((bB[1,:],bB[2,:]))
 
 nIter = 100
 
-heatmap(den.x,den.y,den.density')
 
 # init run
 mA = 0.1
 K = (s,t) -> 1*(t^(mA)+s^(mA)-abs(s-t)^(mA))
 Σ = [2theorCovEff(i,i2,ln,K)/(2K(ts[i],ts[i])*2K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1]
+Σ[1,1] += 0.10624761897604684
+Σ[2,2] += 0.047820488277319766
 eM = (Ts'*Σ^-1*Ts)^-1
 nn= MvNormal([den.x[end÷2], den.y[end÷2]], Symmetric(eM))
 
@@ -313,12 +204,14 @@ end
 
 
 resI = copy(res)
-j = findfirst(den.y .> 0.1)
+j = findfirst(den.y .> mA)
 j2 = findlast(den.y .< 1.0)
 @showprogress for k in j:j2
     mA = den.y[k] 
     K = (s,t) -> 1*(t^(mA)+s^(mA)-abs(s-t)^(mA))
     Σ = [2theorCovEff(i,i2,ln,K)/(2K(ts[i],ts[i])*2K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1]
+    Σ[1,1] += 0.10624761897604684
+    Σ[2,2] += 0.047820488277319766
     eM = (Ts'*Σ^-1*Ts)^-1
     nn= MvNormal([den.x[end÷2], den.y[end÷2]], Symmetric(eM))
 
@@ -338,9 +231,11 @@ j2 = findlast(den.y .< 1.0)
     resI[:,k] .= res[:,k]
 end
 
-mA = 1.0 #mean(bB[2,:])
+mA = 1.0 
 K = (s,t) -> 1*(t^(mA)+s^(mA)-abs(s-t)^(mA))
 Σ = [2theorCovEff(i,i2,ln,K)/(2K(ts[i],ts[i])*2K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1]
+Σ[1,1] += 0.10624761897604684
+Σ[2,2] += 0.047820488277319766
 eM = (Ts'*Σ^-1*Ts)^-1
 nn= MvNormal([den.x[end÷2], den.y[end÷2]], Symmetric(eM))
 
