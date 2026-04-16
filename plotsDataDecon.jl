@@ -4,7 +4,7 @@ using KernelDensity
 
 ## data deConv
 
-
+##
 
 lds = LinRange(-5,-0.5,500)
 as = LinRange(-0.1,1.7,500)
@@ -160,6 +160,15 @@ Plots.hline!([0],linestyle=:dash,color=:white,
 
 ##################################
 
+# kde variances 
+
+bn = KernelDensity.default_bandwidth((bB[1,:],bB[2,:]))
+
+dst = KernelDensity.kernel_dist(Normal,bn)
+
+
+##
+
 ## interpolation
 using KernelDensity,FFTW
 
@@ -167,12 +176,13 @@ den = kde((bB[1,:],bB[2,:]))
 
 nIter = 100
 
-heatmap(den.x,den.y,den.density')
 
 # init run
-mA = 0.15
+mA = 0.1
 K = (s,t) -> 1*(t^(mA)+s^(mA)-abs(s-t)^(mA))
 Σ = [2theorCovEff(i,i2,ln,K)/(2K(ts[i],ts[i])*2K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1]
+Σ[1,1] += 0.10624761897604684
+Σ[2,2] += 0.047820488277319766
 eM = (Ts'*Σ^-1*Ts)^-1
 nn= MvNormal([den.x[end÷2], den.y[end÷2]], Symmetric(eM))
 
@@ -194,12 +204,14 @@ end
 
 
 resI = copy(res)
-j = findfirst(den.y .> 0.15)
+j = findfirst(den.y .> mA)
 j2 = findlast(den.y .< 1.0)
 @showprogress for k in j:j2
     mA = den.y[k] 
     K = (s,t) -> 1*(t^(mA)+s^(mA)-abs(s-t)^(mA))
     Σ = [2theorCovEff(i,i2,ln,K)/(2K(ts[i],ts[i])*2K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1]
+    Σ[1,1] += 0.10624761897604684
+    Σ[2,2] += 0.047820488277319766
     eM = (Ts'*Σ^-1*Ts)^-1
     nn= MvNormal([den.x[end÷2], den.y[end÷2]], Symmetric(eM))
 
@@ -222,6 +234,8 @@ end
 mA = 1.0 
 K = (s,t) -> 1*(t^(mA)+s^(mA)-abs(s-t)^(mA))
 Σ = [2theorCovEff(i,i2,ln,K)/(2K(ts[i],ts[i])*2K(ts[i2],ts[i2]))* 1/(log(10)^2) for i in 1:ln-1,i2 in 1:ln-1]
+Σ[1,1] += 0.10624761897604684
+Σ[2,2] += 0.047820488277319766
 eM = (Ts'*Σ^-1*Ts)^-1
 nn= MvNormal([den.x[end÷2], den.y[end÷2]], Symmetric(eM))
 
