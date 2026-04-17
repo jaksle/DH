@@ -21,7 +21,7 @@ end
 ln = 200
 dt = 0.0567
 const ts = dt*(1:ln)
-H, ζ = 0.8,  20
+H, ζ = 0.6,  20
 M = fill(NaN, ln, ln)
 for i in 1:ln, j in i:ln
     M[i,j] = covGLE(ts[i],ts[j], H, ζ)
@@ -188,10 +188,11 @@ f1 = t-> cos(t)*sqrt(5.99) # 95% elipse
 g1 = t-> sin(t)*sqrt(5.99)
 
 ## main plot
+using CairoMakie
+#using JLD2
+#@load "simGLE" # PC WMat
+#@load "simGLE2"
 
-# use JLD2
-# @load "simGLE" # PC WMat
-# @load "simGLE2"
 set_theme!(theme_latexfonts())
 
 fig = Figure(size = (1200,400),
@@ -202,7 +203,7 @@ ax1 = Axis(fig[1,1],
     xlabel = L"$t$ [s]",
     xscale = log10,
     yscale = log10,
-    title = L"true MSD for $\alpha=0.8$"
+    title = L"True MSD for $\alpha=0.8$"
 )
 
 ax2 = Axis(fig[1,2],
